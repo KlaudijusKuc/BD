@@ -31,5 +31,8 @@
     "node_modules",
     ".nuxt",
     "dist"
+  ],
+  "files": [
+    "types/nuxt.d.ts"
   ]
 }
