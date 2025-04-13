@@ -2,14 +2,33 @@
   // https://nuxt.com/docs/guide/concepts/typescript
   "extends": "./.nuxt/tsconfig.json",
   "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "Node",
     "strict": true,
-    "types": ["@nuxt/types", "node"],
+    "jsx": "preserve",
+    "sourceMap": true,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "lib": ["ESNext", "DOM"],
+    "skipLibCheck": true,
+    "types": ["@nuxt/types", "@nuxtjs/toastification", "@types/node"],
+    "baseUrl": ".",
     "paths": {
       "~/*": ["./*"],
       "@/*": ["./*"]
-    },
-    "moduleResolution": "bundler",
-    "esModuleInterop": true
+    }
   },
-  "exclude": ["node_modules"]
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    "**/*.vue",
+    ".nuxt/nuxt.d.ts",
+    ".nuxt/types/**/*.d.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    ".nuxt",
+    "dist"
+  ]
 }
