@@ -4,16 +4,8 @@ export default defineNuxtConfig({
 
   modules: [
     '@nuxtjs/tailwindcss',
-    '@nuxtjs/color-mode',
     '@nuxtjs/google-fonts'
   ],
-
-  // @ts-ignore - colorMode is a valid property for @nuxtjs/color-mode module
-  colorMode: {
-    classSuffix: '',
-    preference: 'system',
-    fallback: 'light'
-  },
 
   // @ts-ignore - googleFonts is a valid property for @nuxtjs/google-fonts module
   googleFonts: {
@@ -25,11 +17,11 @@ export default defineNuxtConfig({
 
   app: {
     head: {
-      title: 'NovaTech Solutions - Innovative IT Solutions',
+      title: 'E-Shop99 - Inovatyvūs IT Sprendimai',
       meta: [
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-        { name: 'description', content: 'NovaTech Solutions - Leading IT company providing software development, cloud solutions, and cybersecurity services.' }
+        { name: 'description', content: 'E-Shop99 - Pagrindinė IT įmonė, teikianti programinės įrangos kūrimo, debesies sprendimų ir kibernetinio saugumo paslaugas.' }
       ],
       link: [
         { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }
@@ -37,5 +29,22 @@ export default defineNuxtConfig({
     }
   },
 
-  compatibilityDate: '2025-04-13'
+  nitro: {
+    preset: 'node-server',
+    compatibilityDate: '2025-04-13'
+  },
+
+  typescript: {
+    strict: false,
+    typeCheck: false
+  },
+
+  vite: {
+    ssr: {
+      noExternal: ['@vueuse/core', 'unhead']
+    },
+    optimizeDeps: {
+      include: ['@vueuse/core', 'unhead']
+    }
+  }
 })

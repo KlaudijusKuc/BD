@@ -1,0 +1,17 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "nuxt.config.ts",
+      "use": "@nuxtjs/vercel-builder"
+    }
+  ],
+  "buildCommand": "npm run init-db && npm run build",
+  "env": {
+    "DB_HOST": "localhost",
+    "DB_USER": "rofilt_eshop99",
+    "DB_PASSWORD": "929Tn7KCHZTwBVZ5",
+    "DB_NAME": "rofilt_eshop99",
+    "DB_PORT": "3306"
+  }
+} 

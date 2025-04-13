@@ -288,12 +288,12 @@
             <XMarkIcon class="w-6 h-6" />
           </button>
         </div>
-        <form @submit.prevent="submitApplication" class="space-y-6">
+        <form @submit.prevent="handleSubmit" class="space-y-6">
           <div class="grid md:grid-cols-2 gap-6">
             <div>
               <label class="block text-sm font-medium text-gray-300 mb-2">Vardas</label>
               <input
-                v-model="application.name"
+                v-model="formData.name"
                 type="text"
                 required
                 class="w-full px-4 py-2 bg-gray-800/50 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
@@ -302,7 +302,7 @@
             <div>
               <label class="block text-sm font-medium text-gray-300 mb-2">El. paštas</label>
               <input
-                v-model="application.email"
+                v-model="formData.email"
                 type="email"
                 required
                 class="w-full px-4 py-2 bg-gray-800/50 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
@@ -312,7 +312,7 @@
           <div>
             <label class="block text-sm font-medium text-gray-300 mb-2">Telefono numeris</label>
             <input
-              v-model="application.phone"
+              v-model="formData.phone"
               type="tel"
               required
               class="w-full px-4 py-2 bg-gray-800/50 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
@@ -321,6 +321,7 @@
           <div>
             <label class="block text-sm font-medium text-gray-300 mb-2">CV</label>
             <input
+              @change="handleFileUpload"
               type="file"
               accept=".pdf,.doc,.docx"
               required
@@ -330,7 +331,7 @@
           <div>
             <label class="block text-sm font-medium text-gray-300 mb-2">Motyvacinis laiškas</label>
             <textarea
-              v-model="application.coverLetter"
+              v-model="formData.coverLetter"
               rows="4"
               required
               class="w-full px-4 py-2 bg-gray-800/50 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
@@ -346,12 +347,45 @@
             </button>
             <button
               type="submit"
-              class="px-6 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors"
+              :disabled="_isSubmitting"
+              class="px-6 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
             >
-              Pateikti
+              <span v-if="_isSubmitting" class="mr-2">
+                <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              </span>
+              {{ _isSubmitting ? 'Siunčiama...' : 'Siųsti' }}
             </button>
           </div>
+          <div v-if="submitError" class="mt-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg text-red-300 text-sm">
+            {{ submitError }}
+          </div>
         </form>
+      </div>
+    </div>
+
+    <!-- Success Confirmation Modal -->
+    <div v-if="showSuccessModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
+      <div class="glass-card p-8 max-w-md w-full mx-4 border border-green-500/30 shadow-lg shadow-green-500/10">
+        <div class="text-center">
+          <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-500/20 mb-4">
+            <svg class="h-6 w-6 text-green-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <h3 class="text-2xl font-bold text-white mb-2">Paraiška Išsiųsta!</h3>
+          <p class="text-gray-300 mb-6">
+            Dėkojame už jūsų paraišką. Peržiūrėsime ją ir susisieksime su jumis netrukus.
+          </p>
+          <button
+            @click="closeSuccessModal"
+            class="px-6 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors"
+          >
+            Gerai
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -370,6 +404,9 @@ import {
   LightBulbIcon,
   ChevronDownIcon
 } from '@heroicons/vue/24/outline'
+import { useToast } from 'vue-toastification'
+
+const _API_URL = 'http://localhost:3001/api'
 
 const positions = ref([
   {
@@ -401,7 +438,7 @@ const positions = ref([
   }
 ])
 
-const testimonials = ref([
+const _testimonials = ref([
   {
     id: 1,
     name: 'Laura Kazlauskaitė',
@@ -446,13 +483,20 @@ const faqs = ref([
 ])
 
 const showApplicationForm = ref(false)
+const showSuccessModal = ref(false)
 const selectedPosition = ref(null)
-const application = ref({
+const formData = ref({
   name: '',
   email: '',
   phone: '',
-  coverLetter: ''
+  cv: null,
+  coverLetter: '',
+  position: null
 })
+const _isSubmitting = ref(false)
+const submitError = ref(null)
+
+const toast = useToast()
 
 const toggleFaq = (index) => {
   faqs.value[index].isOpen = !faqs.value[index].isOpen
@@ -460,47 +504,87 @@ const toggleFaq = (index) => {
 
 const openApplicationForm = (position) => {
   selectedPosition.value = position
+  formData.value.position = position
   showApplicationForm.value = true
 }
 
 const closeApplicationForm = () => {
   showApplicationForm.value = false
   selectedPosition.value = null
-  application.value = {
+  formData.value = {
     name: '',
     email: '',
     phone: '',
-    coverLetter: ''
+    cv: null,
+    coverLetter: '',
+    position: null
+  }
+  submitError.value = null
+}
+
+const handleFileUpload = (event) => {
+  const input = event.target
+  if (input.files && input.files[0]) {
+    const file = input.files[0]
+    if (file.size > 5 * 1024 * 1024) { // 5MB limit
+      toast.error('Failo dydis turi būti mažesnis nei 5MB')
+      input.value = ''
+      return
+    }
+    formData.value.cv = file
+    submitError.value = null
   }
 }
 
-const submitApplication = () => {
-  // Create a new job application object
-  const newApplication = {
-    id: Date.now(), // Use timestamp as a unique ID
-    position: selectedPosition.value,
-    name: application.value.name,
-    email: application.value.email,
-    phone: application.value.phone,
-    coverLetter: application.value.coverLetter,
-    date: new Date().toISOString(),
-    status: 'new'
+const closeSuccessModal = () => {
+  showSuccessModal.value = false
+}
+
+const handleSubmit = async () => {
+  try {
+    _isSubmitting.value = true
+    submitError.value = null
+
+    // Validate form
+    if (!formData.value.name || !formData.value.email || !formData.value.phone || !formData.value.cv) {
+      toast.error('Prašome užpildyti visus privalomus laukus')
+      return
+    }
+
+    // Create FormData object
+    const formDataObj = new FormData()
+    formDataObj.append('name', formData.value.name)
+    formDataObj.append('email', formData.value.email)
+    formDataObj.append('phone', formData.value.phone)
+    formDataObj.append('position', JSON.stringify(formData.value.position))
+    formDataObj.append('cv', formData.value.cv)
+    if (formData.value.coverLetter) {
+      formDataObj.append('coverLetter', formData.value.coverLetter)
+    }
+
+    // Submit form
+    const response = await fetch('/api/jobs', {
+      method: 'POST',
+      body: formDataObj
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => null)
+      throw new Error(errorData?.message || 'Failed to submit application')
+    }
+
+    // Show success modal instead of toast
+    showSuccessModal.value = true
+    
+    // Reset form
+    closeApplicationForm()
+  } catch (error) {
+    console.error('Error submitting application:', error)
+    submitError.value = error.message || 'Įvyko klaida bandant išsiųsti paraišką. Bandykite dar kartą.'
+    toast.error(submitError.value)
+  } finally {
+    _isSubmitting.value = false
   }
-  
-  // Get existing applications from localStorage
-  const existingApplications = JSON.parse(localStorage.getItem('jobApplications') || '[]')
-  
-  // Add the new application
-  existingApplications.push(newApplication)
-  
-  // Save back to localStorage
-  localStorage.setItem('jobApplications', JSON.stringify(existingApplications))
-  
-  // Show success message
-  alert('Jūsų paraiška sėkmingai pateikta!')
-  
-  // Close the form
-  closeApplicationForm()
 }
 </script>
 

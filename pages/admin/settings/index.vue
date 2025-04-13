@@ -545,8 +545,15 @@ const saveSettings = async () => {
     setTimeout(() => {
       showSuccessToast.value = false
     }, 3000)
-  } catch (error) {
-    console.error('Error saving settings:', error)
+  } catch (_err) {
+    // Show error message
+    const toast = document.createElement('div')
+    toast.className = 'fixed bottom-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50'
+    toast.textContent = 'An error occurred while saving settings. Please try again.'
+    document.body.appendChild(toast)
+    setTimeout(() => {
+      toast.remove()
+    }, 3000)
   } finally {
     isLoading.value = false
   }

@@ -82,22 +82,18 @@ const handleSubmit = async () => {
   isSubmitting.value = true
   
   try {
-    // Create a new submission object
-    const newSubmission = {
-      id: Date.now().toString(),
-      ...form.value,
-      date: new Date().toISOString(),
-      status: 'new'
+    // Submit to API endpoint
+    const response = await fetch('/api/contact', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(form.value)
+    })
+
+    if (!response.ok) {
+      throw new Error('Failed to submit message')
     }
-    
-    // Get existing submissions from localStorage
-    const existingSubmissions = JSON.parse(localStorage.getItem('contactSubmissions') || '[]')
-    
-    // Add the new submission
-    existingSubmissions.push(newSubmission)
-    
-    // Save back to localStorage
-    localStorage.setItem('contactSubmissions', JSON.stringify(existingSubmissions))
     
     // Reset form
     form.value = {
@@ -111,7 +107,8 @@ const handleSubmit = async () => {
     emit('submission-success')
     
   } catch (error) {
-    console.error('Error saving submission:', error)
+    console.error('Error submitting message:', error)
+    throw error
   } finally {
     isSubmitting.value = false
   }

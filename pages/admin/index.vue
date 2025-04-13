@@ -178,7 +178,7 @@
                 </div>
               </td>
               <td class="px-6 py-4 text-gray-300">{{ submission.email }}</td>
-              <td class="px-6 py-4 text-gray-300">{{ submission.position ? submission.position.title : 'N/A' }}</td>
+              <td class="px-6 py-4 text-gray-300">{{ submission.position_title }}</td>
               <td class="px-6 py-4 text-gray-300">{{ formatDate(submission.date) }}</td>
               <td class="px-6 py-4">
                 <span class="px-3 py-1 rounded-full text-xs font-medium" :class="getStatusClass(submission.status)">
@@ -261,12 +261,14 @@
             </div>
             <div v-if="selectedSubmission.type === 'job'">
               <p class="text-sm text-gray-400">Pozicija</p>
-              <p class="text-white">{{ selectedSubmission.position ? selectedSubmission.position.title : 'N/A' }}</p>
+              <p class="text-white">{{ selectedSubmission.position_title }}</p>
             </div>
           </div>
           <div>
             <p class="text-sm text-gray-400">Žinutė</p>
-            <p class="text-white whitespace-pre-wrap">{{ selectedSubmission.message }}</p>
+            <p class="text-white whitespace-pre-wrap">
+              {{ selectedSubmission.type === 'contact' ? selectedSubmission.message : selectedSubmission.cover_letter }}
+            </p>
           </div>
         </div>
         <div class="p-6 border-t border-gray-700/50 flex justify-end space-x-4">
@@ -289,12 +291,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import {
   DocumentTextIcon,
   CheckCircleIcon,
   ClockIcon,
-  ClipboardDocumentListIcon,
   ArrowPathIcon,
   EyeIcon,
   PencilIcon,
@@ -304,40 +305,112 @@ import {
   BriefcaseIcon
 } from '@heroicons/vue/24/outline'
 
-definePageMeta({
-  layout: 'admin'
-})
+interface _Position {
+  id: number
+  title: string
+  type: string
+  location: string
+  hours: string
+  salary: string
+  description: string
+}
 
-const recentContactSubmissions = ref([])
-const recentJobSubmissions = ref([])
-const selectedSubmission = ref(null)
+interface ContactSubmission {
+  id: string
+  type: 'contact'
+  name: string
+  email: string
+  subject: string
+  message: string
+  date: string
+  status: 'new' | 'pending' | 'responded' | 'rejected'
+}
+
+interface JobSubmission {
+  id: string
+  type: 'job'
+  name: string
+  email: string
+  phone: string
+  position_id: string
+  position_title: string
+  position_type: string
+  position_location: string
+  cover_letter: string
+  cv_filename: string
+  date: string
+  status: 'new' | 'pending' | 'responded' | 'rejected'
+}
+
+type Submission = ContactSubmission | JobSubmission
+
+const API_URL = '/api'
+
+const recentContactSubmissions = ref<ContactSubmission[]>([])
+const recentJobSubmissions = ref<JobSubmission[]>([])
+const selectedSubmission = ref<Submission | null>(null)
 const totalSubmissions = ref(0)
 const respondedSubmissions = ref(0)
 const pendingSubmissions = ref(0)
+const jobApplications = ref<JobSubmission[]>([])
+const showSubmissionModal = ref(false)
+const isLoading = ref(true)
+const error = ref<string | null>(null)
 
-// Load data from localStorage
-const loadData = () => {
-  const contactSubmissions = JSON.parse(localStorage.getItem('contactSubmissions') || '[]')
-  const jobApplications = JSON.parse(localStorage.getItem('jobApplications') || '[]')
+// Define the page meta to use the admin layout
+definePageMeta({
+  layout: 'admin'
+});
+
+const loadData = async () => {
+  isLoading.value = true
+  error.value = null
   
-  // Sort submissions by date
-  const sortedContactSubmissions = [...contactSubmissions].sort((a, b) => new Date(b.date) - new Date(a.date))
-  const sortedJobApplications = [...jobApplications].sort((a, b) => new Date(b.date) - new Date(a.date))
-  
-  // Get recent submissions
-  recentContactSubmissions.value = sortedContactSubmissions.slice(0, 5)
-  recentJobSubmissions.value = sortedJobApplications.slice(0, 5)
-  
-  // Calculate stats
-  totalSubmissions.value = contactSubmissions.length + jobApplications.length
-  respondedSubmissions.value = contactSubmissions.filter(s => s.status === 'responded').length + 
-                              jobApplications.filter(s => s.status === 'responded').length
-  pendingSubmissions.value = contactSubmissions.filter(s => s.status === 'new' || s.status === 'pending').length + 
-                            jobApplications.filter(s => s.status === 'new' || s.status === 'pending').length
+  try {
+    // Load contact submissions from API
+    const contactResponse = await fetch(`${API_URL}/contact`)
+    if (!contactResponse.ok) {
+      throw new Error('Failed to fetch contact submissions')
+    }
+    const contactData = await contactResponse.json()
+    recentContactSubmissions.value = contactData.map((item: any) => ({
+      ...item,
+      type: 'contact'
+    })).sort((a: ContactSubmission, b: ContactSubmission) => 
+      new Date(b.date).getTime() - new Date(a.date).getTime()
+    )
+    
+    // Load job submissions from API
+    const jobResponse = await fetch(`${API_URL}/jobs`)
+    if (!jobResponse.ok) {
+      throw new Error('Failed to fetch job applications')
+    }
+    const jobData = await jobResponse.json()
+    recentJobSubmissions.value = jobData.map((item: any) => ({
+      ...item,
+      type: 'job'
+    })).sort((a: JobSubmission, b: JobSubmission) => 
+      new Date(b.date).getTime() - new Date(a.date).getTime()
+    )
+    
+    // Calculate statistics
+    totalSubmissions.value = contactData.length + jobData.length
+    respondedSubmissions.value = contactData.filter(s => s.status === 'responded').length + 
+                                jobData.filter(s => s.status === 'responded').length
+    pendingSubmissions.value = totalSubmissions.value - respondedSubmissions.value
+    
+    // Update job applications
+    jobApplications.value = recentJobSubmissions.value
+  } catch (err) {
+    console.error('Error loading data:', err)
+    error.value = 'Failed to load data. Please try again later.'
+  } finally {
+    isLoading.value = false
+  }
 }
 
 // Format date
-const formatDate = (date) => {
+const formatDate = (date: string): string => {
   return new Date(date).toLocaleDateString('lt-LT', {
     year: 'numeric',
     month: 'long',
@@ -348,85 +421,100 @@ const formatDate = (date) => {
 }
 
 // Get status classes
-const getStatusClass = (status) => {
+const getStatusClass = (status: Submission['status']): string => {
   switch (status) {
     case 'new':
-      return 'bg-blue-500/20 text-blue-400'
+      return 'bg-blue-100 text-blue-800'
     case 'pending':
-      return 'bg-amber-500/20 text-amber-400'
+      return 'bg-yellow-100 text-yellow-800'
     case 'responded':
-      return 'bg-green-500/20 text-green-400'
+      return 'bg-green-100 text-green-800'
     case 'rejected':
-      return 'bg-red-500/20 text-red-400'
+      return 'bg-red-100 text-red-800'
     default:
-      return 'bg-gray-500/20 text-gray-400'
+      return 'bg-gray-100 text-gray-800'
   }
 }
 
 // Get status text
-const getStatusText = (status) => {
+const getStatusText = (status: Submission['status']): string => {
   switch (status) {
     case 'new':
-      return 'Naujas'
+      return 'Nauja'
     case 'pending':
-      return 'Laukiama'
+      return 'Peržiūrima'
     case 'responded':
       return 'Atsakyta'
     case 'rejected':
       return 'Atmesta'
     default:
-      return 'Nežinoma'
+      return status
   }
 }
 
 // View submission
-const viewSubmission = (submission) => {
-  // Add type property to submission for modal display
-  const submissionWithType = {
-    ...submission,
-    type: submission.position ? 'job' : 'contact'
-  }
-  selectedSubmission.value = submissionWithType
+const viewSubmission = (submission: Submission) => {
+  // Simply set the selected submission and show the modal
+  selectedSubmission.value = submission
+  showSubmissionModal.value = true
 }
 
 // Update status
-const updateStatus = (submission) => {
+const updateStatus = async (submission: Submission) => {
   const statusOptions = [
-    { value: 'new', label: 'Naujas' },
-    { value: 'pending', label: 'Laukiama' },
-    { value: 'responded', label: 'Atsakyta' },
-    { value: 'rejected', label: 'Atmesta' }
+    { value: 'new' as const, label: 'Naujas' },
+    { value: 'pending' as const, label: 'Laukiama' },
+    { value: 'responded' as const, label: 'Atsakyta' },
+    { value: 'rejected' as const, label: 'Atmesta' }
   ]
   
   const currentStatusIndex = statusOptions.findIndex(option => option.value === submission.status)
   const nextStatusIndex = (currentStatusIndex + 1) % statusOptions.length
   const newStatus = statusOptions[nextStatusIndex].value
   
-  const storageKey = submission.position ? 'jobApplications' : 'contactSubmissions'
-  const submissions = JSON.parse(localStorage.getItem(storageKey) || '[]')
-  
-  const index = submissions.findIndex(s => s.id === submission.id)
-  if (index !== -1) {
-    submissions[index].status = newStatus
-    localStorage.setItem(storageKey, JSON.stringify(submissions))
-    loadData()
+  try {
+    const endpoint = 'position' in submission ? 'jobs' : 'contact'
+    const response = await fetch(`${API_URL}/${endpoint}/${submission.id}/status`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ status: newStatus })
+    })
     
-    // Close modal if it's open
-    if (selectedSubmission.value && selectedSubmission.value.id === submission.id) {
-      selectedSubmission.value = null
+    if (!response.ok) {
+      throw new Error('Failed to update status')
     }
+    
+    // Refresh data after successful update
+    await loadData()
+  } catch (err) {
+    console.error('Error updating status:', err)
+    error.value = 'Failed to update status. Please try again.'
   }
 }
 
 // Delete submission
-const deleteSubmission = (submission) => {
-  if (confirm('Ar tikrai norite ištrinti šią paraišką?')) {
-    const storageKey = submission.type === 'contact' ? 'contactSubmissions' : 'jobApplications'
-    const submissions = JSON.parse(localStorage.getItem(storageKey) || '[]')
+const deleteSubmission = async (submission: Submission) => {
+  if (!confirm('Are you sure you want to delete this submission?')) {
+    return
+  }
+  
+  try {
+    const endpoint = 'position' in submission ? 'jobs' : 'contact'
+    const response = await fetch(`${API_URL}/${endpoint}/${submission.id}`, {
+      method: 'DELETE'
+    })
     
-    const filteredSubmissions = submissions.filter(s => s.id !== submission.id)
-    localStorage.setItem(storageKey, JSON.stringify(filteredSubmissions))
-    loadData()
+    if (!response.ok) {
+      throw new Error('Failed to delete submission')
+    }
+    
+    // Refresh data after successful deletion
+    await loadData()
+  } catch (err) {
+    console.error('Error deleting submission:', err)
+    error.value = 'Failed to delete submission. Please try again.'
   }
 }
 

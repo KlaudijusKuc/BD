@@ -109,6 +109,7 @@ import {
   CheckCircleIcon
 } from '@heroicons/vue/24/outline'
 import { ref, watch } from 'vue'
+import { useToast } from 'vue-toastification'
 
 const showSuccessMessage = ref(false)
 
@@ -120,6 +121,43 @@ watch(showSuccessMessage, (newValue) => {
     }, 5000)
   }
 })
+
+const handleSubmit = async () => {
+  try {
+    // Validate form
+    if (!formData.value.name || !formData.value.email || !formData.value.message) {
+      useToast().show('error', 'Prašome užpildyti visus privalomus laukus')
+      return
+    }
+
+    // Submit form
+    const response = await fetch('/api/contact', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(formData.value)
+    })
+
+    if (!response.ok) {
+      throw new Error('Failed to submit message')
+    }
+
+    // Show success message
+    useToast().show('success', 'Jūsų žinutė sėkmingai išsiųsta!')
+
+    // Reset form
+    formData.value = {
+      name: '',
+      email: '',
+      subject: '',
+      message: ''
+    }
+  } catch (error) {
+    console.error('Error submitting message:', error)
+    useToast().show('error', 'Įvyko klaida bandant išsiųsti žinutę. Bandykite dar kartą.')
+  }
+}
 </script>
 
 <style scoped>

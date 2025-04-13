@@ -189,6 +189,7 @@ import {
   XMarkIcon
 } from '@heroicons/vue/24/outline'
 
+// Define the page meta to use the admin layout
 definePageMeta({
   layout: 'admin'
 })
@@ -198,12 +199,28 @@ const searchQuery = ref('')
 const statusFilter = ref('')
 const sortBy = ref('newest')
 const selectedSubmission = ref(null)
+const isLoading = ref(true)
+const error = ref(null)
+
+// Fetch submissions from API
+const fetchSubmissions = async () => {
+  try {
+    isLoading.value = true
+    const response = await fetch('/api/contact')
+    if (!response.ok) {
+      throw new Error('Failed to fetch submissions')
+    }
+    submissions.value = await response.json()
+  } catch (err) {
+    error.value = err.message
+    console.error('Error fetching submissions:', err)
+  } finally {
+    isLoading.value = false
+  }
+}
 
 onMounted(() => {
-  const savedSubmissions = localStorage.getItem('contactSubmissions')
-  if (savedSubmissions) {
-    submissions.value = JSON.parse(savedSubmissions)
-  }
+  fetchSubmissions()
 })
 
 const filteredSubmissions = computed(() => {
@@ -282,29 +299,65 @@ const viewSubmission = (submission) => {
   selectedSubmission.value = { ...submission }
 }
 
-const updateStatus = (submission) => {
-  const statuses = ['new', 'reviewed', 'responded', 'archived']
-  const currentIndex = statuses.indexOf(submission.status)
-  const nextIndex = (currentIndex + 1) % statuses.length
-  submission.status = statuses[nextIndex]
-  
-  // Save to localStorage
-  localStorage.setItem('contactSubmissions', JSON.stringify(submissions.value))
-}
-
-const deleteSubmission = (submission) => {
-  if (confirm('Ar tikrai norite ištrinti šią paraišką?')) {
-    submissions.value = submissions.value.filter(s => s.id !== submission.id)
-    localStorage.setItem('contactSubmissions', JSON.stringify(submissions.value))
+const updateStatus = async (submission) => {
+  try {
+    const response = await fetch(`/api/contact/${submission.id}/status`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ status: submission.status })
+    })
+    
+    if (!response.ok) {
+      throw new Error('Failed to update status')
+    }
+    
+    await fetchSubmissions() // Refresh the list
+  } catch (err) {
+    console.error('Error updating status:', err)
+    alert('Failed to update status')
   }
 }
 
-const saveSubmissionChanges = () => {
-  const index = submissions.value.findIndex(s => s.id === selectedSubmission.value.id)
-  if (index !== -1) {
-    submissions.value[index] = { ...selectedSubmission.value }
-    localStorage.setItem('contactSubmissions', JSON.stringify(submissions.value))
+const deleteSubmission = async (submission) => {
+  if (confirm('Ar tikrai norite ištrinti šią paraišką?')) {
+    try {
+      const response = await fetch(`/api/contact/${submission.id}`, {
+        method: 'DELETE'
+      })
+      
+      if (!response.ok) {
+        throw new Error('Failed to delete submission')
+      }
+      
+      await fetchSubmissions() // Refresh the list
+    } catch (err) {
+      console.error('Error deleting submission:', err)
+      alert('Failed to delete submission')
+    }
+  }
+}
+
+const saveSubmissionChanges = async () => {
+  try {
+    const response = await fetch(`/api/contact/${selectedSubmission.value.id}/status`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ status: selectedSubmission.value.status })
+    })
+    
+    if (!response.ok) {
+      throw new Error('Failed to update submission')
+    }
+    
+    await fetchSubmissions() // Refresh the list
     selectedSubmission.value = null
+  } catch (err) {
+    console.error('Error saving changes:', err)
+    alert('Failed to save changes')
   }
 }
 </script> 

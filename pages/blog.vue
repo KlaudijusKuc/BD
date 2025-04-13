@@ -18,7 +18,7 @@
       <div class="container mx-auto px-4">
         <!-- Featured Post -->
         <div class="mb-16">
-          <h2 class="text-3xl font-bold mb-8 text-white">Featured Post</h2>
+          <h2 class="text-3xl font-bold mb-8 text-white">Pagrindinis Straipsnis</h2>
           <div class="glass-card p-6">
             <div class="grid md:grid-cols-2 gap-8">
               <div class="relative h-64 md:h-auto">
@@ -53,87 +53,24 @@
         <!-- Recent Posts -->
         <div>
           <h2 class="text-3xl font-bold mb-8 text-white">Recent Posts</h2>
-          <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <!-- Post 1 -->
-            <article class="glass-card p-6">
-              <div class="relative h-48 mb-6">
-                <img
-                  src="/images/blog/post-1.svg"
-                  alt="Blog Post 1"
-                  class="w-full h-full object-cover rounded-lg"
-                />
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div v-for="post in posts" :key="post.id" class="glass-card">
+              <!-- Post Image -->
+              <div class="relative aspect-w-16 aspect-h-9 rounded-t-lg overflow-hidden">
+                <img :src="post.image" :alt="post.title" class="object-cover w-full h-full">
               </div>
-              <div class="flex items-center gap-4 mb-4">
-                <span class="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-sm">Development</span>
-                <span class="text-gray-400 text-sm">March 10, 2024</span>
+              <!-- Post Content -->
+              <div class="p-6">
+                <h3 class="text-xl font-bold text-white mb-2">{{ post.title }}</h3>
+                <p class="text-gray-300 mb-4">{{ post.excerpt }}</p>
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center">
+                    <span class="text-sm text-gray-400">{{ post.author }}</span>
+                  </div>
+                  <span class="text-sm text-gray-400">{{ post.date }}</span>
+                </div>
               </div>
-              <h3 class="text-xl font-bold mb-4 text-white">Building Scalable Web Applications</h3>
-              <p class="text-gray-300 mb-6">
-                Learn about the best practices and technologies for building scalable web applications
-                that can handle millions of users.
-              </p>
-              <NuxtLink
-                to="/blog/scalable-web-applications"
-                class="inline-flex items-center text-purple-400 hover:text-purple-300"
-              >
-                Read More
-                <ArrowRightIcon class="w-4 h-4 ml-2" />
-              </NuxtLink>
-            </article>
-
-            <!-- Post 2 -->
-            <article class="glass-card p-6">
-              <div class="relative h-48 mb-6">
-                <img
-                  src="/images/blog/post-2.svg"
-                  alt="Blog Post 2"
-                  class="w-full h-full object-cover rounded-lg"
-                />
-              </div>
-              <div class="flex items-center gap-4 mb-4">
-                <span class="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-sm">Design</span>
-                <span class="text-gray-400 text-sm">March 5, 2024</span>
-              </div>
-              <h3 class="text-xl font-bold mb-4 text-white">UI/UX Design Trends for 2024</h3>
-              <p class="text-gray-300 mb-6">
-                Discover the latest UI/UX design trends that are shaping the digital landscape
-                and improving user experiences.
-              </p>
-              <NuxtLink
-                to="/blog/ui-ux-trends-2024"
-                class="inline-flex items-center text-purple-400 hover:text-purple-300"
-              >
-                Read More
-                <ArrowRightIcon class="w-4 h-4 ml-2" />
-              </NuxtLink>
-            </article>
-
-            <!-- Post 3 -->
-            <article class="glass-card p-6">
-              <div class="relative h-48 mb-6">
-                <img
-                  src="/images/blog/post-3.svg"
-                  alt="Blog Post 3"
-                  class="w-full h-full object-cover rounded-lg"
-                />
-              </div>
-              <div class="flex items-center gap-4 mb-4">
-                <span class="px-3 py-1 bg-yellow-500/20 text-yellow-400 rounded-full text-sm">Marketing</span>
-                <span class="text-gray-400 text-sm">March 1, 2024</span>
-              </div>
-              <h3 class="text-xl font-bold mb-4 text-white">Digital Marketing Strategies</h3>
-              <p class="text-gray-300 mb-6">
-                Explore effective digital marketing strategies that can help businesses
-                reach their target audience and achieve their goals.
-              </p>
-              <NuxtLink
-                to="/blog/digital-marketing-strategies"
-                class="inline-flex items-center text-purple-400 hover:text-purple-300"
-              >
-                Read More
-                <ArrowRightIcon class="w-4 h-4 ml-2" />
-              </NuxtLink>
-            </article>
+            </div>
           </div>
         </div>
       </div>
@@ -142,42 +79,17 @@
 </template>
 
 <script setup>
-const blogPosts = [
+import { ref } from 'vue'
+
+const posts = ref([
   {
     id: 1,
-    title: 'E-parduotuvės tendencijos 2024 metais',
-    excerpt: 'Aptariame naujausias e-parduotuvės tendencijas ir kaip jos paveiks jūsų verslą.',
-    category: 'E-parduotuvės',
-    image: '/images/blog/post-1.jpg',
-    author: {
-      name: 'Marius Jankauskas',
-      avatar: '/images/testimonials/avatar-2.svg'
-    },
-    date: '2024-03-10'
+    title: 'Getting Started with Vue 3',
+    excerpt: 'Learn the basics of Vue 3 and its composition API...',
+    image: '/images/blog/vue3.jpg',
+    date: '2024-03-15',
+    author: 'John Doe'
   },
-  {
-    id: 2,
-    title: 'Kaip optimizuoti mobiliąją versiją',
-    excerpt: 'Patarimai, kaip pagerinti mobiliosios versijos naudojimo patirtį ir konversiją.',
-    category: 'Web Dizainas',
-    image: '/images/blog/post-2.jpg',
-    author: {
-      name: 'Eglė Petrauskienė',
-      avatar: '/images/testimonials/avatar-3.svg'
-    },
-    date: '2024-03-05'
-  },
-  {
-    id: 3,
-    title: 'Debesies sprendimų privalumai',
-    excerpt: 'Kodėl debesies sprendimai tampa būtini moderniam verslui?',
-    category: 'Technologijos',
-    image: '/images/blog/post-3.jpg',
-    author: {
-      name: 'Laura Kazlauskaitė',
-      avatar: '/images/testimonials/avatar-1.svg'
-    },
-    date: '2024-02-28'
-  }
-]
+  // ... other posts
+])
 </script> 
