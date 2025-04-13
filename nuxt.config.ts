@@ -1,17 +1,20 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+import { defineNuxtConfig } from 'nuxt/config'
+
 export default defineNuxtConfig({
   devtools: { enabled: true },
 
   modules: [
     '@nuxtjs/tailwindcss',
-    '@nuxtjs/google-fonts'
+    '@nuxtjs/color-mode',
+    '@nuxtjs/google-fonts',
+    'vue-toastification/nuxt'
   ],
 
   // @ts-ignore - googleFonts is a valid property for @nuxtjs/google-fonts module
   googleFonts: {
     families: {
-      Inter: [400, 500, 600, 700],
-      'Space+Grotesk': [400, 500, 600, 700]
+      'Inter': [400, 500, 600, 700]
     }
   },
 
@@ -35,8 +38,8 @@ export default defineNuxtConfig({
   },
 
   typescript: {
-    strict: false,
-    typeCheck: false
+    strict: true,
+    typeCheck: true
   },
 
   vite: {
@@ -46,5 +49,23 @@ export default defineNuxtConfig({
     optimizeDeps: {
       include: ['@vueuse/core', 'unhead']
     }
+  },
+
+  colorMode: {
+    classSuffix: ''
+  },
+
+  toast: {
+    timeout: 3000,
+    closeOnClick: true,
+    pauseOnFocusLoss: true,
+    pauseOnHover: true,
+    draggable: true,
+    draggablePercent: 0.6,
+    showCloseButtonOnHover: false,
+    hideProgressBar: false,
+    closeButton: "button",
+    icon: true,
+    rtl: false
   }
 })
