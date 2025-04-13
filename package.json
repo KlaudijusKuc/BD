@@ -34,7 +34,8 @@
     "vue3-carousel": "0.3.1"
   },
   "devDependencies": {
-    "@nuxtjs/eslint-config-typescript": "12.1.0",
+    "@nuxt/types": "^2.18.1",
+    "@nuxtjs/eslint-config-typescript": "^12.1.0",
     "@types/aos": "3.0.7",
     "@types/node": "^20.11.25",
     "@typescript-eslint/eslint-plugin": "7.1.1",
