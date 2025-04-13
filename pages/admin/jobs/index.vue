@@ -260,7 +260,7 @@ const loadApplications = async () => {
     isLoading.value = true
     error.value = null
     
-    const response = await fetch(`${API_URL}/jobs`)
+    const response = await fetch(`${API_URL}/job-applications`)
     if (!response.ok) {
       throw new Error('Failed to fetch job applications')
     }
@@ -328,7 +328,7 @@ const viewApplication = (application) => {
 
 const saveApplicationChanges = async () => {
   try {
-    const response = await fetch(`${API_URL}/jobs/${selectedApplication.value.id}/status`, {
+    const response = await fetch(`${API_URL}/job-applications/${selectedApplication.value.id}/status`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json'
@@ -360,7 +360,7 @@ const updateStatus = async (application) => {
                      application.status === 'pending' ? 'responded' : 
                      application.status === 'responded' ? 'rejected' : 'new'
     
-    const response = await fetch(`${API_URL}/jobs/${application.id}/status`, {
+    const response = await fetch(`${API_URL}/job-applications/${application.id}/status`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json'
@@ -396,7 +396,7 @@ const deleteApplication = async (application) => {
   }
   
   try {
-    const response = await fetch(`${API_URL}/jobs/${application.id}`, {
+    const response = await fetch(`${API_URL}/job-applications/${application.id}`, {
       method: 'DELETE'
     })
     
@@ -404,10 +404,10 @@ const deleteApplication = async (application) => {
       throw new Error('Failed to delete application')
     }
     
-    // Update local state
+    // Remove from local state
     applications.value = applications.value.filter(app => app.id !== application.id)
     
-    // Close modal if the deleted application was selected
+    // Close modal if it's open
     if (selectedApplication.value && selectedApplication.value.id === application.id) {
       selectedApplication.value = null
     }

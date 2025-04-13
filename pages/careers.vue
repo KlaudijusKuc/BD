@@ -563,7 +563,7 @@ const handleSubmit = async () => {
     }
 
     // Submit form
-    const response = await fetch('/api/jobs', {
+    const response = await fetch('/api/job-applications', {
       method: 'POST',
       body: formDataObj
     })

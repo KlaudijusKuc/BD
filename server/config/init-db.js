@@ -1,4 +1,4 @@
-import mysql from 'mysql2/promise';
+import { createPool } from 'mysql2/promise'
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -6,15 +6,16 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-async function initializeDatabase() {
-  // Get database configuration from environment variables
-  const dbConfig = {
-    host: process.env.DB_HOST || 'localhost',
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || '',
-    port: process.env.DB_PORT || 3306
-  };
+const dbConfig = {
+  host: process.env.DB_HOST || 'sql7.freesqldatabase.com',
+  user: process.env.DB_USER || 'sql7772954',
+  password: process.env.DB_PASSWORD || 'TJ8yiaRujp',
+  database: process.env.DB_NAME || 'sql7772954',
+  port: parseInt(process.env.DB_PORT || '3306'),
+  ssl: false
+}
 
+async function initializeDatabase() {
   // If RAILWAY_DATABASE_URL is provided, use it instead
   if (process.env.RAILWAY_DATABASE_URL) {
     const url = new URL(process.env.RAILWAY_DATABASE_URL);
@@ -27,13 +28,12 @@ async function initializeDatabase() {
     };
   }
 
-  const connection = await mysql.createConnection(dbConfig);
-  const dbName = process.env.DB_NAME || 'railway';
+  const connection = await createPool(dbConfig);
 
   try {
     // Create database if it doesn't exist
-    await connection.query(`CREATE DATABASE IF NOT EXISTS ${dbName}`);
-    await connection.query(`USE ${dbName}`);
+    await connection.query(`CREATE DATABASE IF NOT EXISTS ${dbConfig.database}`);
+    await connection.query(`USE ${dbConfig.database}`);
 
     // Read and execute schema.sql
     const schema = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8');

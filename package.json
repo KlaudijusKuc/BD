@@ -9,7 +9,8 @@
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "lint": "eslint .",
-    "init-db": "node server/config/init-db.js"
+    "init-db": "node server/config/init-db.js",
+    "vercel-build": "nuxt build"
   },
   "dependencies": {
     "@heroicons/vue": "2.1.1",

@@ -1,20 +1,21 @@
 import { defineEventHandler, readBody, createError } from 'h3'
 import { createPool } from 'mysql2/promise'
-import db from '../config/db.js'
 
-const pool = createPool({
+const dbConfig = {
   host: process.env.DB_HOST || 'sql7.freesqldatabase.com',
   user: process.env.DB_USER || 'sql7772954',
   password: process.env.DB_PASSWORD || 'TJ8yiaRujp',
   database: process.env.DB_NAME || 'sql7772954',
   port: parseInt(process.env.DB_PORT || '3306'),
   ssl: false
-})
+}
+
+const pool = createPool(dbConfig)
 
 // GET /api/contact - Get all contact submissions
 export const getContacts = defineEventHandler(async (event) => {
   try {
-    const [rows] = await db.query('SELECT * FROM contact_submissions ORDER BY date DESC')
+    const [rows] = await pool.query('SELECT * FROM contact_submissions ORDER BY date DESC')
     return rows
   } catch (error) {
     console.error('Error fetching contact submissions:', error)
@@ -30,7 +31,7 @@ export const getContact = defineEventHandler(async (event) => {
   const id = event.context.params.id
   
   try {
-    const [rows] = await db.query('SELECT * FROM contact_submissions WHERE id = ?', [id])
+    const [rows] = await pool.query('SELECT * FROM contact_submissions WHERE id = ?', [id])
     if (rows.length === 0) {
       throw createError({
         statusCode: 404,
@@ -60,7 +61,7 @@ export const createContact = defineEventHandler(async (event) => {
       })
     }
     
-    const [result] = await db.query(
+    const [result] = await pool.query(
       'INSERT INTO contact_submissions (name, email, subject, message) VALUES (?, ?, ?, ?)',
       [name, email, subject, message]
     )
@@ -97,7 +98,7 @@ export const updateContactStatus = defineEventHandler(async (event) => {
   }
   
   try {
-    await db.query(
+    await pool.query(
       'UPDATE contact_submissions SET status = ? WHERE id = ?',
       [status, id]
     )
@@ -117,7 +118,7 @@ export const deleteContact = defineEventHandler(async (event) => {
   const id = event.context.params.id
   
   try {
-    await db.query('DELETE FROM contact_submissions WHERE id = ?', [id])
+    await pool.query('DELETE FROM contact_submissions WHERE id = ?', [id])
     return { success: true }
   } catch (error) {
     console.error('Error deleting contact submission:', error)
