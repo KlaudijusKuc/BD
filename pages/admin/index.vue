@@ -381,7 +381,7 @@ const loadData = async () => {
     )
     
     // Load job submissions from API
-    const jobResponse = await fetch(`${API_URL}/jobs`)
+    const jobResponse = await fetch(`${API_URL}/job-applications`)
     if (!jobResponse.ok) {
       throw new Error('Failed to fetch job applications')
     }
@@ -473,7 +473,7 @@ const updateStatus = async (submission: Submission) => {
   const newStatus = statusOptions[nextStatusIndex].value
   
   try {
-    const endpoint = 'position' in submission ? 'jobs' : 'contact'
+    const endpoint = 'position' in submission ? 'job-applications' : 'contact'
     const response = await fetch(`${API_URL}/${endpoint}/${submission.id}/status`, {
       method: 'PATCH',
       headers: {
@@ -501,7 +501,7 @@ const deleteSubmission = async (submission: Submission) => {
   }
   
   try {
-    const endpoint = 'position' in submission ? 'jobs' : 'contact'
+    const endpoint = 'position' in submission ? 'job-applications' : 'contact'
     const response = await fetch(`${API_URL}/${endpoint}/${submission.id}`, {
       method: 'DELETE'
     })
