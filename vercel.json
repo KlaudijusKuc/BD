@@ -6,12 +6,12 @@
       "use": "@nuxtjs/vercel-builder"
     }
   ],
-  "buildCommand": "npm run init-db && npm run build",
+  "buildCommand": "npm run build",
   "env": {
-    "DB_HOST": "localhost",
-    "DB_USER": "rofilt_eshop99",
-    "DB_PASSWORD": "929Tn7KCHZTwBVZ5",
-    "DB_NAME": "rofilt_eshop99",
+    "DB_HOST": "sql7.freesqldatabase.com",
+    "DB_USER": "sql7772954",
+    "DB_PASSWORD": "TJ8yiaRujp",
+    "DB_NAME": "sql7772954",
     "DB_PORT": "3306"
   }
 } 
