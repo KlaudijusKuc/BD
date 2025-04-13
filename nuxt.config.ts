@@ -8,7 +8,7 @@ export default defineNuxtConfig({
     '@nuxtjs/tailwindcss',
     '@nuxtjs/color-mode',
     '@nuxtjs/google-fonts',
-    'vue-toastification/nuxt'
+    '@vueuse/nuxt'
   ],
 
   // @ts-ignore - googleFonts is a valid property for @nuxtjs/google-fonts module
