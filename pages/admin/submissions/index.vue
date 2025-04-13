@@ -189,44 +189,33 @@ import {
   XMarkIcon
 } from '@heroicons/vue/24/outline'
 
+interface Submission {
+  id: number
+  name: string
+  email: string
+  subject: string
+  message: string
+  date: string
+  status: 'new' | 'reviewed' | 'responded' | 'archived'
+}
+
 // Define the page meta to use the admin layout
 definePageMeta({
   layout: 'admin'
 })
 
-const submissions = ref([])
+const submissions = ref<Submission[]>([])
 const searchQuery = ref('')
 const statusFilter = ref('')
 const sortBy = ref('newest')
-const selectedSubmission = ref(null)
+const selectedSubmission = ref<Submission | null>(null)
 const isLoading = ref(true)
-const error = ref(null)
-
-// Fetch submissions from API
-const fetchSubmissions = async () => {
-  try {
-    isLoading.value = true
-    const response = await fetch('/api/contact')
-    if (!response.ok) {
-      throw new Error('Failed to fetch submissions')
-    }
-    submissions.value = await response.json()
-  } catch (err) {
-    error.value = err.message
-    console.error('Error fetching submissions:', err)
-  } finally {
-    isLoading.value = false
-  }
-}
-
-onMounted(() => {
-  fetchSubmissions()
-})
+const error = ref<string | null>(null)
 
 const filteredSubmissions = computed(() => {
   let result = [...submissions.value]
-  
-  // Apply search filter
+
+  // Filter by search query
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase()
     result = result.filter(submission => 
@@ -234,29 +223,31 @@ const filteredSubmissions = computed(() => {
       submission.email.toLowerCase().includes(query)
     )
   }
-  
-  // Apply status filter
+
+  // Filter by status
   if (statusFilter.value) {
     result = result.filter(submission => submission.status === statusFilter.value)
   }
-  
-  // Apply sorting
-  result.sort((a, b) => {
-    switch (sortBy.value) {
-      case 'oldest':
-        return new Date(a.date) - new Date(b.date)
-      case 'name':
-        return a.name.localeCompare(b.name)
-      default: // newest
-        return new Date(b.date) - new Date(a.date)
-    }
-  })
-  
+
+  // Sort results
+  switch (sortBy.value) {
+    case 'newest':
+      result.sort((a, b) => Number(new Date(b.date)) - Number(new Date(a.date)))
+      break
+    case 'oldest':
+      result.sort((a, b) => Number(new Date(a.date)) - Number(new Date(b.date)))
+      break
+    case 'name':
+      result.sort((a, b) => a.name.localeCompare(b.name))
+      break
+  }
+
   return result
 })
 
-const formatDate = (dateString) => {
-  return new Date(dateString).toLocaleDateString('lt-LT', {
+const formatDate = (dateString: string): string => {
+  const date = new Date(dateString)
+  return date.toLocaleDateString('lt-LT', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
@@ -265,7 +256,7 @@ const formatDate = (dateString) => {
   })
 }
 
-const getStatusClasses = (status) => {
+const getStatusClasses = (status: Submission['status']): string => {
   switch (status) {
     case 'new':
       return 'bg-blue-500/20 text-blue-400'
@@ -280,7 +271,7 @@ const getStatusClasses = (status) => {
   }
 }
 
-const getStatusText = (status) => {
+const getStatusText = (status: Submission['status']): string => {
   switch (status) {
     case 'new':
       return 'Naujas'
@@ -295,11 +286,11 @@ const getStatusText = (status) => {
   }
 }
 
-const viewSubmission = (submission) => {
+const viewSubmission = (submission: Submission) => {
   selectedSubmission.value = { ...submission }
 }
 
-const updateStatus = async (submission) => {
+const updateStatus = async (submission: Submission) => {
   try {
     const response = await fetch(`/api/contact/${submission.id}/status`, {
       method: 'PATCH',
@@ -308,56 +299,77 @@ const updateStatus = async (submission) => {
       },
       body: JSON.stringify({ status: submission.status })
     })
-    
+
     if (!response.ok) {
       throw new Error('Failed to update status')
     }
-    
-    await fetchSubmissions() // Refresh the list
   } catch (err) {
     console.error('Error updating status:', err)
-    alert('Failed to update status')
+    error.value = err instanceof Error ? err.message : 'An error occurred'
   }
 }
 
-const deleteSubmission = async (submission) => {
+const deleteSubmission = async (submission: Submission) => {
   if (confirm('Ar tikrai norite ištrinti šią paraišką?')) {
     try {
       const response = await fetch(`/api/contact/${submission.id}`, {
         method: 'DELETE'
       })
       
-      if (!response.ok) {
+      if (response.ok) {
+        submissions.value = submissions.value.filter(s => s.id !== submission.id)
+      } else {
         throw new Error('Failed to delete submission')
       }
-      
-      await fetchSubmissions() // Refresh the list
     } catch (err) {
       console.error('Error deleting submission:', err)
-      alert('Failed to delete submission')
+      error.value = err instanceof Error ? err.message : 'An error occurred'
     }
   }
 }
 
 const saveSubmissionChanges = async () => {
+  if (!selectedSubmission.value) return
+
   try {
-    const response = await fetch(`/api/contact/${selectedSubmission.value.id}/status`, {
+    const response = await fetch(`/api/contact/${selectedSubmission.value.id}`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ status: selectedSubmission.value.status })
+      body: JSON.stringify({
+        status: selectedSubmission.value.status
+      })
     })
-    
-    if (!response.ok) {
+
+    if (response.ok) {
+      const index = submissions.value.findIndex(s => s.id === selectedSubmission.value?.id)
+      if (index !== -1) {
+        submissions.value[index] = { ...selectedSubmission.value }
+      }
+      selectedSubmission.value = null
+    } else {
       throw new Error('Failed to update submission')
     }
-    
-    await fetchSubmissions() // Refresh the list
-    selectedSubmission.value = null
   } catch (err) {
-    console.error('Error saving changes:', err)
-    alert('Failed to save changes')
+    console.error('Error updating submission:', err)
+    error.value = err instanceof Error ? err.message : 'An error occurred'
   }
 }
+
+onMounted(async () => {
+  try {
+    const response = await fetch('/api/contact')
+    if (response.ok) {
+      submissions.value = await response.json()
+    } else {
+      throw new Error('Failed to fetch submissions')
+    }
+  } catch (err) {
+    console.error('Error fetching submissions:', err)
+    error.value = err instanceof Error ? err.message : 'An error occurred'
+  } finally {
+    isLoading.value = false
+  }
+})
 </script> 

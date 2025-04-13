@@ -39,7 +39,7 @@
           </div>
           <div>
             <p class="text-gray-400 text-sm">Laukiančių Paraiškų</p>
-            <h3 class="text-2xl font-bold text-white">{{ pendingSubmissions }}</h3>
+            <h3 class="text-2xl font-bold text-white">{{ newSubmissions }}</h3>
           </div>
         </div>
       </div>
@@ -291,7 +291,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import {
   DocumentTextIcon,
   CheckCircleIcon,
@@ -305,41 +305,29 @@ import {
   BriefcaseIcon
 } from '@heroicons/vue/24/outline'
 
-interface _Position {
+interface BaseSubmission {
   id: number
-  title: string
-  type: string
-  location: string
-  hours: string
-  salary: string
-  description: string
-}
-
-interface ContactSubmission {
-  id: string
-  type: 'contact'
   name: string
   email: string
-  subject: string
-  message: string
   date: string
   status: 'new' | 'pending' | 'responded' | 'rejected'
 }
 
-interface JobSubmission {
-  id: string
+interface ContactSubmission extends BaseSubmission {
+  type: 'contact'
+  subject: string
+  message: string
+}
+
+interface JobSubmission extends BaseSubmission {
   type: 'job'
-  name: string
-  email: string
-  phone: string
-  position_id: string
+  position_id: number
   position_title: string
   position_type: string
   position_location: string
   cover_letter: string
   cv_filename: string
-  date: string
-  status: 'new' | 'pending' | 'responded' | 'rejected'
+  phone: string
 }
 
 type Submission = ContactSubmission | JobSubmission
@@ -350,9 +338,8 @@ const recentContactSubmissions = ref<ContactSubmission[]>([])
 const recentJobSubmissions = ref<JobSubmission[]>([])
 const selectedSubmission = ref<Submission | null>(null)
 const totalSubmissions = ref(0)
+const newSubmissions = ref(0)
 const respondedSubmissions = ref(0)
-const pendingSubmissions = ref(0)
-const jobApplications = ref<JobSubmission[]>([])
 const showSubmissionModal = ref(false)
 const isLoading = ref(true)
 const error = ref<string | null>(null)
@@ -372,11 +359,8 @@ const loadData = async () => {
     if (!contactResponse.ok) {
       throw new Error('Failed to fetch contact submissions')
     }
-    const contactData = await contactResponse.json()
-    recentContactSubmissions.value = contactData.map((item: any) => ({
-      ...item,
-      type: 'contact'
-    })).sort((a: ContactSubmission, b: ContactSubmission) => 
+    const contactData = await contactResponse.json() as ContactSubmission[]
+    recentContactSubmissions.value = contactData.sort((a: ContactSubmission, b: ContactSubmission) => 
       new Date(b.date).getTime() - new Date(a.date).getTime()
     )
     
@@ -385,22 +369,17 @@ const loadData = async () => {
     if (!jobResponse.ok) {
       throw new Error('Failed to fetch job applications')
     }
-    const jobData = await jobResponse.json()
-    recentJobSubmissions.value = jobData.map((item: any) => ({
-      ...item,
-      type: 'job'
-    })).sort((a: JobSubmission, b: JobSubmission) => 
+    const jobData = await jobResponse.json() as JobSubmission[]
+    recentJobSubmissions.value = jobData.sort((a: JobSubmission, b: JobSubmission) => 
       new Date(b.date).getTime() - new Date(a.date).getTime()
     )
     
     // Calculate statistics
     totalSubmissions.value = contactData.length + jobData.length
-    respondedSubmissions.value = contactData.filter(s => s.status === 'responded').length + 
+    newSubmissions.value = contactData.filter(s => s.status === 'new').length +
+                          jobData.filter(s => s.status === 'new').length
+    respondedSubmissions.value = contactData.filter(s => s.status === 'responded').length +
                                 jobData.filter(s => s.status === 'responded').length
-    pendingSubmissions.value = totalSubmissions.value - respondedSubmissions.value
-    
-    // Update job applications
-    jobApplications.value = recentJobSubmissions.value
   } catch (err) {
     console.error('Error loading data:', err)
     error.value = 'Failed to load data. Please try again later.'

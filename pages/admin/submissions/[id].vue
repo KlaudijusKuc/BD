@@ -10,125 +10,107 @@
       <h1 class="text-3xl font-display font-bold">Submission Details</h1>
     </div>
     
-    <div v-if="submission" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-      <!-- Submission Details -->
-      <div class="lg:col-span-2">
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden">
-          <div class="p-6 border-b border-gray-200 dark:border-gray-700">
-            <div class="flex justify-between items-start">
-              <div>
-                <h2 class="text-xl font-semibold">{{ submission.subject }}</h2>
-                <p class="text-gray-500 dark:text-gray-400 mt-1">
-                  From {{ submission.name }} &lt;{{ submission.email }}&gt;
-                </p>
-              </div>
-              <span
-                :class="[
-                  'px-3 py-1 text-sm font-medium rounded-full',
-                  submission.status === 'new'
-                    ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
-                    : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                ]"
-              >
-                {{ submission.status === 'new' ? 'New' : 'Responded' }}
-              </span>
-            </div>
-          </div>
-          
-          <div class="p-6">
-            <div class="prose dark:prose-invert max-w-none">
-              <p class="whitespace-pre-line">{{ submission.message }}</p>
-            </div>
-          </div>
-          
-          <div class="p-4 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-200 dark:border-gray-700">
-            <p class="text-sm text-gray-500 dark:text-gray-400">
-              Received on {{ formatDate(submission.date) }}
-            </p>
-          </div>
+    <div v-if="isLoading" class="glass-card p-6">
+      <p class="text-gray-400">Loading submission...</p>
+    </div>
+    
+    <div v-else-if="error" class="glass-card p-6">
+      <p class="text-red-400">{{ error }}</p>
+    </div>
+    
+    <div v-else-if="submission" class="glass-card p-6">
+      <div class="space-y-6">
+        <div>
+          <h2 class="text-xl font-semibold">{{ submission.subject }}</h2>
+          <p class="text-gray-400 mt-1">
+            From {{ submission.name }} &lt;{{ submission.email }}&gt;
+          </p>
         </div>
         
-        <!-- Response Form -->
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden mt-8">
-          <div class="p-6 border-b border-gray-200 dark:border-gray-700">
-            <h2 class="text-xl font-semibold">Respond to Submission</h2>
-          </div>
-          
-          <div class="p-6">
-            <form @submit.prevent="submitResponse" class="space-y-6">
-              <div>
-                <label for="response" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Your Response</label>
-                <textarea
-                  id="response"
-                  v-model="response"
-                  rows="6"
-                  required
-                  class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white"
-                  placeholder="Type your response here..."
-                ></textarea>
-              </div>
-              
-              <div class="flex items-center">
-                <button
-                  type="submit"
-                  class="bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-md transition-colors"
-                  :disabled="isSubmitting"
-                >
-                  <span v-if="isSubmitting">Sending...</span>
-                  <span v-else>Send Response</span>
-                </button>
-                
-                <button
-                  v-if="submission.status === 'new'"
-                  type="button"
-                  @click="markAsResponded"
-                  class="ml-4 text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400"
-                >
-                  Mark as Responded
-                </button>
-              </div>
-            </form>
-          </div>
+        <div class="flex items-center space-x-4">
+          <span
+            :class="[
+              'px-2 py-1 text-xs font-medium rounded-full',
+              submission.status === 'new'
+                ? 'bg-blue-500/20 text-blue-400'
+                : 'bg-green-500/20 text-green-400'
+            ]"
+          >
+            {{ submission.status === 'new' ? 'New' : 'Responded' }}
+          </span>
         </div>
-      </div>
-      
-      <!-- Sidebar -->
-      <div>
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden">
-          <div class="p-6 border-b border-gray-200 dark:border-gray-700">
-            <h2 class="text-xl font-semibold">Actions</h2>
-          </div>
-          
-          <div class="p-6 space-y-4">
-            <button
-              @click="deleteSubmission"
-              class="w-full flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 transition-colors"
-            >
-              <TrashIcon class="w-5 h-5 mr-2" />
-              Delete Submission
-            </button>
-            
-            <button
-              @click="exportSubmission"
-              class="w-full flex items-center justify-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
-            >
-              <ArrowDownTrayIcon class="w-5 h-5 mr-2" />
-              Export as PDF
-            </button>
-          </div>
+        
+        <div>
+          <h3 class="text-lg font-semibold mb-2">Message</h3>
+          <p class="whitespace-pre-line">{{ submission.message }}</p>
+        </div>
+        
+        <div class="text-sm text-gray-400">
+          Received on {{ formatDate(submission.date) }}
+        </div>
+        
+        <div class="flex justify-end space-x-4">
+          <button
+            @click="deleteSubmission"
+            class="px-4 py-2 bg-red-500/20 text-red-400 hover:bg-red-500/30 rounded-lg"
+          >
+            Delete
+          </button>
+          <button
+            @click="updateStatus"
+            class="px-4 py-2 bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 rounded-lg"
+          >
+            Mark as Responded
+          </button>
         </div>
       </div>
     </div>
     
-    <div v-else class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-8 text-center">
-      <p class="text-gray-500 dark:text-gray-400">Submission not found</p>
-      <NuxtLink
-        to="/admin/submissions"
-        class="mt-4 inline-flex items-center text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300"
-      >
-        <ArrowLeftIcon class="w-5 h-5 mr-2" />
-        Back to Submissions
-      </NuxtLink>
+    <div v-else class="glass-card p-6">
+      <p class="text-gray-400">Submission not found</p>
+    </div>
+    
+    <div
+      v-if="showStatusModal"
+      class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+    >
+      <div class="glass-card max-w-md w-full">
+        <div class="p-6">
+          <h3 class="text-xl font-bold mb-4">Update Status</h3>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-300 mb-2">Status</label>
+              <select
+                v-model="selectedStatus"
+                class="w-full px-4 py-2 bg-gray-800/50 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+              >
+                <option value="new">New</option>
+                <option value="responded">Responded</option>
+              </select>
+            </div>
+            <div
+              v-if="submission?.status === 'new'"
+              class="text-sm text-gray-400"
+            >
+              Note: Marking as responded will notify the submitter
+            </div>
+          </div>
+        </div>
+        <div class="p-6 border-t border-gray-700 flex justify-end space-x-4">
+          <button
+            @click="showStatusModal = false"
+            class="px-4 py-2 text-gray-400 hover:text-white"
+          >
+            Cancel
+          </button>
+          <button
+            @click="saveStatus"
+            class="px-4 py-2 bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 rounded-lg"
+          >
+            Save Changes
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -142,99 +124,106 @@ import {
   ArrowDownTrayIcon 
 } from '@heroicons/vue/24/outline'
 
+interface Submission {
+  id: number
+  name: string
+  email: string
+  subject: string
+  message: string
+  date: string
+  status: 'new' | 'pending' | 'responded' | 'rejected'
+}
+
 definePageMeta({
   layout: 'admin'
 })
 
 const route = useRoute()
 const router = useRouter()
-const submission = ref(null)
-const response = ref('')
-const isSubmitting = ref(false)
-
-onMounted(() => {
-  // In a real application, this would fetch data from an API
-  // For now, we'll use localStorage
-  const submissions = JSON.parse(localStorage.getItem('contactSubmissions') || '[]')
-  const id = parseInt(route.params.id as string)
-  submission.value = submissions.find((s: any) => s.id === id) || null
-})
+const submission = ref<Submission | null>(null)
+const isLoading = ref(true)
+const error = ref<string | null>(null)
+const showStatusModal = ref(false)
+const selectedStatus = ref<'new' | 'responded'>('new')
 
 const formatDate = (dateString: string) => {
-  const date = new Date(dateString)
-  return new Intl.DateTimeFormat('en-US', {
+  return new Date(dateString).toLocaleDateString('lt-LT', {
     year: 'numeric',
-    month: 'short',
+    month: 'long',
     day: 'numeric',
     hour: '2-digit',
     minute: '2-digit'
-  }).format(date)
+  })
 }
 
-const submitResponse = async () => {
-  if (!response.value.trim()) return
-  
-  isSubmitting.value = true
-  
+const fetchSubmission = async () => {
   try {
-    // In a real application, this would send the response to an API
-    // For now, we'll just update the submission status
-    const submissions = JSON.parse(localStorage.getItem('contactSubmissions') || '[]')
-    const index = submissions.findIndex((s: any) => s.id === submission.value.id)
-    
-    if (index !== -1) {
-      submissions[index].status = 'responded'
-      submissions[index].response = response.value
-      submissions[index].responseDate = new Date().toISOString()
-      
-      localStorage.setItem('contactSubmissions', JSON.stringify(submissions))
-      submission.value = submissions[index]
-      response.value = ''
-      
-      // Show success message or redirect
-      alert('Response sent successfully!')
+    isLoading.value = true
+    const response = await fetch(`/api/contact/${route.params.id}`)
+    if (!response.ok) {
+      throw new Error('Failed to fetch submission')
     }
-  } catch (error) {
-    console.error('Error sending response:', error)
-    alert('There was an error sending your response. Please try again.')
+    submission.value = await response.json()
+  } catch (err) {
+    console.error('Error fetching submission:', err)
+    error.value = err instanceof Error ? err.message : 'An error occurred'
   } finally {
-    isSubmitting.value = false
+    isLoading.value = false
   }
 }
 
-const markAsResponded = () => {
-  // In a real application, this would update the status via an API
-  // For now, we'll just update localStorage
-  const submissions = JSON.parse(localStorage.getItem('contactSubmissions') || '[]')
-  const index = submissions.findIndex((s: any) => s.id === submission.value.id)
-  
-  if (index !== -1) {
-    submissions[index].status = 'responded'
-    localStorage.setItem('contactSubmissions', JSON.stringify(submissions))
-    submission.value = submissions[index]
-    
-    // Show success message
-    alert('Submission marked as responded!')
+const updateStatus = () => {
+  if (!submission.value) return
+  selectedStatus.value = submission.value.status as 'new' | 'responded'
+  showStatusModal.value = true
+}
+
+const saveStatus = async () => {
+  if (!submission.value) return
+
+  try {
+    const response = await fetch(`/api/contact/${submission.value.id}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        status: selectedStatus.value
+      })
+    })
+
+    if (!response.ok) {
+      throw new Error('Failed to update status')
+    }
+
+    submission.value.status = selectedStatus.value
+    showStatusModal.value = false
+  } catch (err) {
+    console.error('Error updating status:', err)
+    error.value = err instanceof Error ? err.message : 'An error occurred'
   }
 }
 
-const deleteSubmission = () => {
-  if (confirm('Are you sure you want to delete this submission? This action cannot be undone.')) {
-    // In a real application, this would delete via an API
-    // For now, we'll just update localStorage
-    const submissions = JSON.parse(localStorage.getItem('contactSubmissions') || '[]')
-    const filtered = submissions.filter((s: any) => s.id !== submission.value.id)
-    
-    localStorage.setItem('contactSubmissions', JSON.stringify(filtered))
-    
-    // Redirect back to submissions list
+const deleteSubmission = async () => {
+  if (!submission.value || !confirm('Are you sure you want to delete this submission?')) {
+    return
+  }
+
+  try {
+    const response = await fetch(`/api/contact/${submission.value.id}`, {
+      method: 'DELETE'
+    })
+
+    if (!response.ok) {
+      throw new Error('Failed to delete submission')
+    }
+
     router.push('/admin/submissions')
+  } catch (err) {
+    console.error('Error deleting submission:', err)
+    error.value = err instanceof Error ? err.message : 'An error occurred'
   }
 }
 
-const exportSubmission = () => {
-  // In a real application, this would generate a PDF
-  // For now, we'll just show an alert
-  alert('PDF export functionality would be implemented here.')
-}
+onMounted(fetchSubmission)
 </script> 
