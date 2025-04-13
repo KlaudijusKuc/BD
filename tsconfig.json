@@ -12,7 +12,7 @@
     "esModuleInterop": true,
     "lib": ["ESNext", "DOM"],
     "skipLibCheck": true,
-    "types": ["@nuxt/types", "@types/node"],
+    "types": ["@nuxt/types", "@types/node", "@nuxt/schema"],
     "baseUrl": ".",
     "paths": {
       "~/*": ["./*"],
@@ -24,7 +24,8 @@
     "**/*.tsx",
     "**/*.vue",
     ".nuxt/nuxt.d.ts",
-    ".nuxt/types/**/*.d.ts"
+    ".nuxt/types/**/*.d.ts",
+    "types/**/*.d.ts"
   ],
   "exclude": [
     "node_modules",
