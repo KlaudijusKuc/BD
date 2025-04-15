@@ -85,7 +85,6 @@ import { ref, onMounted } from 'vue'
 import { Carousel, Slide, Navigation, Pagination } from 'vue3-carousel'
 import { ChatBubbleLeftIcon } from '@heroicons/vue/24/outline'
 import { StarIcon } from '@heroicons/vue/24/solid'
-import 'vue3-carousel/dist/carousel.css'
 
 const isClient = ref(false)
 
@@ -119,101 +118,4 @@ const testimonials = [
     quote: 'e-shop99 skaitmeninio marketingo strategijos padėjo mums pasiekti neįtikėtinų rezultatų. Jų komanda visada atsako į mūsų poreikius ir siūlo inovatyvius sprendimus.'
   }
 ]
-</script>
-
-<style scoped>
-.testimonials-carousel {
-  padding: 1rem 0;
-}
-
-:deep(.carousel__track) {
-  padding: 1rem 0;
-}
-
-:deep(.carousel__slide) {
-  opacity: 0.5;
-  transition: all 0.3s ease;
-}
-
-:deep(.carousel__slide--active) {
-  opacity: 1;
-  transform: scale(1.05);
-}
-
-:deep(.carousel__prev),
-:deep(.carousel__next) {
-  background-color: rgba(107, 33, 168, 0.3);
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  color: white;
-  transition: all 0.3s ease;
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 10;
-}
-
-:deep(.carousel__prev) {
-  left: -20px;
-}
-
-:deep(.carousel__next) {
-  right: -20px;
-}
-
-:deep(.carousel__prev:hover),
-:deep(.carousel__next:hover) {
-  background-color: rgba(107, 33, 168, 0.5);
-}
-
-:deep(.carousel__pagination) {
-  margin-top: 1.5rem;
-  position: relative;
-  z-index: 10;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-:deep(.carousel__pagination-button) {
-  background-color: rgba(107, 33, 168, 0.2);
-  border: 1px solid rgba(107, 33, 168, 0.3);
-  border-radius: 50%;
-  width: 12px;
-  height: 12px;
-  margin: 0 6px;
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-:deep(.carousel__pagination-button::before) {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.5), rgba(59, 130, 246, 0.5));
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-:deep(.carousel__pagination-button--active) {
-  background-color: transparent;
-  border-color: rgba(139, 92, 246, 0.8);
-  transform: scale(1.2);
-  box-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
-}
-
-:deep(.carousel__pagination-button--active::before) {
-  opacity: 1;
-}
-
-:deep(.carousel__pagination-button:hover) {
-  background-color: rgba(107, 33, 168, 0.3);
-  transform: scale(1.1);
-  box-shadow: 0 0 8px rgba(139, 92, 246, 0.3);
-}
-</style> 
+</script> 

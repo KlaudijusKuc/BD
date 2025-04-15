@@ -3,7 +3,7 @@
   "compilerOptions": {
     "target": "ESNext",
     "module": "ESNext",
-    "moduleResolution": "Node",
+    "moduleResolution": "Bundler",
     "strict": true,
     "jsx": "preserve",
     "sourceMap": true,
@@ -11,12 +11,34 @@
     "esModuleInterop": true,
     "lib": ["ESNext", "DOM"],
     "skipLibCheck": true,
-    "types": ["@nuxt/types", "@types/node", "@nuxt/schema"],
+    "types": ["@types/node", "nuxt", "vue-toastification"],
     "baseUrl": ".",
     "paths": {
       "~/*": ["./*"],
       "@/*": ["./*"]
-    }
+    },
+    "allowJs": true,
+    "noEmit": true,
+    "isolatedModules": true,
+    "useDefineForClassFields": true,
+    "verbatimModuleSyntax": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "exactOptionalPropertyTypes": true
   },
   "include": [
     "**/*.ts",
@@ -24,7 +46,8 @@
     "**/*.vue",
     ".nuxt/nuxt.d.ts",
     ".nuxt/types/**/*.d.ts",
-    "types/**/*.d.ts"
+    "types/**/*.d.ts",
+    "plugins/**/*.ts"
   ],
   "exclude": [
     "node_modules",

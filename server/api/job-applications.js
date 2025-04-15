@@ -1,27 +1,14 @@
-import { createPool } from 'mysql2/promise'
-import { defineEventHandler, readBody, createError } from 'h3'
+import { defineEventHandler, readBody, getRouterParams } from 'h3'
 import { unlink } from 'fs/promises'
 import { join } from 'path'
-
-const dbConfig = {
-  host: process.env.DB_HOST || 'sql7.freesqldatabase.com',
-  user: process.env.DB_USER || 'sql7772954',
-  password: process.env.DB_PASSWORD || 'TJ8yiaRujp',
-  database: process.env.DB_NAME || 'sql7772954',
-  port: parseInt(process.env.DB_PORT || '3306'),
-  ssl: false
-}
-
-const pool = createPool(dbConfig)
+import pool from '../config/db'
 
 // GET /api/job-applications - Get all job applications
 export const getJobApplications = defineEventHandler(async (event) => {
   try {
     const [rows] = await pool.query(`
-      SELECT ja.*, p.title as position_title, p.type as position_type, p.location as position_location 
-      FROM job_applications ja 
-      LEFT JOIN positions p ON ja.position_id = p.id 
-      ORDER BY ja.date DESC
+      SELECT * FROM job_applications 
+      ORDER BY date DESC
     `)
     return rows
   } catch (error) {
@@ -35,15 +22,11 @@ export const getJobApplications = defineEventHandler(async (event) => {
 
 // GET /api/job-applications/:id - Get a single job application
 export const getJobApplication = defineEventHandler(async (event) => {
-  const id = event.context.params.id
+  const params = getRouterParams(event)
+  const id = params.id
   
   try {
-    const [rows] = await pool.query(`
-      SELECT ja.*, p.title as position_title, p.type as position_type, p.location as position_location 
-      FROM job_applications ja 
-      LEFT JOIN positions p ON ja.position_id = p.id 
-      WHERE ja.id = ?
-    `, [id])
+    const [rows] = await pool.query('SELECT * FROM job_applications WHERE id = ?', [id])
     
     if (rows.length === 0) {
       throw createError({
@@ -65,7 +48,7 @@ export const getJobApplication = defineEventHandler(async (event) => {
 export const createJobApplication = defineEventHandler(async (event) => {
   try {
     const body = await readBody(event)
-    const { name, email, phone, position_id, cover_letter, cv_filename } = body
+    const { name, email, phone, position_id, position_title, position_type, position_location, cover_letter, cv_filename } = body
     
     if (!name || !email || !phone || !position_id || !cv_filename) {
       throw createError({
@@ -75,8 +58,10 @@ export const createJobApplication = defineEventHandler(async (event) => {
     }
     
     const [result] = await pool.query(
-      'INSERT INTO job_applications (name, email, phone, position_id, cover_letter, cv_filename) VALUES (?, ?, ?, ?, ?, ?)',
-      [name, email, phone, position_id, cover_letter || null, cv_filename]
+      `INSERT INTO job_applications 
+       (name, email, phone, position_id, position_title, position_type, position_location, cover_letter, cv_filename) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [name, email, phone, position_id, position_title, position_type, position_location, cover_letter || null, cv_filename]
     )
     
     return {
@@ -85,6 +70,9 @@ export const createJobApplication = defineEventHandler(async (event) => {
       email,
       phone,
       position_id,
+      position_title,
+      position_type,
+      position_location,
       cover_letter,
       cv_filename,
       status: 'new',
@@ -101,7 +89,8 @@ export const createJobApplication = defineEventHandler(async (event) => {
 
 // PATCH /api/job-applications/:id/status - Update a job application status
 export const updateJobApplicationStatus = defineEventHandler(async (event) => {
-  const id = event.context.params.id
+  const params = getRouterParams(event)
+  const id = params.id
   const body = await readBody(event)
   const { status } = body
   
@@ -113,46 +102,67 @@ export const updateJobApplicationStatus = defineEventHandler(async (event) => {
   }
   
   try {
-    await pool.query(
+    const [result] = await pool.query(
       'UPDATE job_applications SET status = ? WHERE id = ?',
       [status, id]
     )
+    
+    if (result.affectedRows === 0) {
+      throw createError({
+        statusCode: 404,
+        message: 'Job application not found'
+      })
+    }
     
     return { success: true, status }
   } catch (error) {
     console.error('Error updating job application status:', error)
     throw createError({
-      statusCode: 500,
-      message: 'Failed to update job application status'
+      statusCode: error.statusCode || 500,
+      message: error.message || 'Failed to update job application status'
     })
   }
 })
 
 // DELETE /api/job-applications/:id - Delete a job application
 export const deleteJobApplication = defineEventHandler(async (event) => {
-  const id = event.context.params.id
+  const params = getRouterParams(event)
+  const id = params.id
   
   try {
     // First get the CV filename to delete the file
     const [rows] = await pool.query('SELECT cv_filename FROM job_applications WHERE id = ?', [id])
-    if (rows.length > 0) {
-      const cv_filename = rows[0].cv_filename
-      try {
-        const filePath = join(process.cwd(), 'public', 'uploads', 'cv', cv_filename)
-        await unlink(filePath)
-      } catch (fileError) {
-        console.error('Error deleting CV file:', fileError)
-        // Continue with deletion even if file removal fails
-      }
+    if (rows.length === 0) {
+      throw createError({
+        statusCode: 404,
+        message: 'Job application not found'
+      })
+    }
+
+    const cv_filename = rows[0].cv_filename
+    try {
+      const filePath = join(process.cwd(), 'public', 'uploads', 'cv', cv_filename)
+      await unlink(filePath)
+    } catch (fileError) {
+      console.error('Error deleting CV file:', fileError)
+      // Continue with deletion even if file removal fails
     }
     
-    await pool.query('DELETE FROM job_applications WHERE id = ?', [id])
+    const [result] = await pool.query('DELETE FROM job_applications WHERE id = ?', [id])
+    
+    if (result.affectedRows === 0) {
+      throw createError({
+        statusCode: 404,
+        message: 'Job application not found'
+      })
+    }
+    
     return { success: true }
   } catch (error) {
     console.error('Error deleting job application:', error)
     throw createError({
-      statusCode: 500,
-      message: 'Failed to delete job application'
+      statusCode: error.statusCode || 500,
+      message: error.message || 'Failed to delete job application'
     })
   }
 })
@@ -160,15 +170,22 @@ export const deleteJobApplication = defineEventHandler(async (event) => {
 // Default handler for all routes
 export default defineEventHandler(async (event) => {
   const method = event.method
-  const path = event.path
+  const path = event.path?.toLowerCase()
   
+  if (!path) {
+    throw createError({
+      statusCode: 404,
+      message: 'Not found'
+    })
+  }
+
   // Handle GET /api/job-applications
   if (method === 'GET' && path === '/api/job-applications') {
     return getJobApplications(event)
   }
   
   // Handle GET /api/job-applications/:id
-  if (method === 'GET' && path.match(/^\/api\/job-applications\/\d+$/)) {
+  if (method === 'GET' && /^\/api\/job-applications\/\d+$/.test(path)) {
     return getJobApplication(event)
   }
   
@@ -178,16 +195,15 @@ export default defineEventHandler(async (event) => {
   }
   
   // Handle PATCH /api/job-applications/:id/status
-  if (method === 'PATCH' && path.match(/^\/api\/job-applications\/\d+\/status$/)) {
+  if (method === 'PATCH' && /^\/api\/job-applications\/\d+\/status$/.test(path)) {
     return updateJobApplicationStatus(event)
   }
   
   // Handle DELETE /api/job-applications/:id
-  if (method === 'DELETE' && path.match(/^\/api\/job-applications\/\d+$/)) {
+  if (method === 'DELETE' && /^\/api\/job-applications\/\d+$/.test(path)) {
     return deleteJobApplication(event)
   }
   
-  // Return 404 for other routes
   throw createError({
     statusCode: 404,
     message: 'Not found'

@@ -1,16 +1,5 @@
-import { createPool } from 'mysql2/promise'
 import { defineEventHandler, createError } from 'h3'
-
-const dbConfig = {
-  host: process.env.DB_HOST || 'sql7.freesqldatabase.com',
-  user: process.env.DB_USER || 'sql7772954',
-  password: process.env.DB_PASSWORD || 'TJ8yiaRujp',
-  database: process.env.DB_NAME || 'sql7772954',
-  port: parseInt(process.env.DB_PORT || '3306'),
-  ssl: false
-}
-
-const pool = createPool(dbConfig)
+import pool from '../config/db'
 
 export default defineEventHandler(async (event) => {
   try {

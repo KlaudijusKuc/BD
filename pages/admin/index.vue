@@ -291,7 +291,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import {
   DocumentTextIcon,
   CheckCircleIcon,
@@ -449,11 +449,13 @@ const updateStatus = async (submission: Submission) => {
   
   const currentStatusIndex = statusOptions.findIndex(option => option.value === submission.status)
   const nextStatusIndex = (currentStatusIndex + 1) % statusOptions.length
-  const newStatus = statusOptions[nextStatusIndex].value
+  const nextStatus = statusOptions[nextStatusIndex]
+  const defaultStatus = statusOptions[0]?.value || 'pending'
+  const newStatus = nextStatus ? nextStatus.value : defaultStatus
   
   try {
     const endpoint = 'position' in submission ? 'job-applications' : 'contact'
-    const response = await fetch(`${API_URL}/${endpoint}/${submission.id}/status`, {
+    const response = await fetch(`${API_URL}/${endpoint}/${submission.id}`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json'

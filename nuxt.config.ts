@@ -11,6 +11,16 @@ export default defineNuxtConfig({
     '@vueuse/nuxt'
   ],
 
+  css: [
+    'vue-toastification/dist/index.css',
+    'vue3-carousel/dist/carousel.css',
+    '@/assets/css/carousel.css'
+  ],
+
+  build: {
+    transpile: ['vue-toastification']
+  },
+
   // @ts-ignore - googleFonts is a valid property for @nuxtjs/google-fonts module
   googleFonts: {
     families: {

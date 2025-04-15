@@ -260,7 +260,7 @@ const loadApplications = async () => {
     isLoading.value = true
     error.value = null
     
-    const response = await fetch(`${API_URL}/job-applications`)
+    const response = await fetch(`/api/job-applications`)
     if (!response.ok) {
       throw new Error('Failed to fetch job applications')
     }
@@ -328,7 +328,7 @@ const viewApplication = (application) => {
 
 const saveApplicationChanges = async () => {
   try {
-    const response = await fetch(`${API_URL}/job-applications/${selectedApplication.value.id}/status`, {
+    const response = await fetch(`${API_URL}/jobs/${selectedApplication.value.id}/status`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json'
@@ -354,39 +354,47 @@ const saveApplicationChanges = async () => {
   }
 }
 
+/**
+ * Updates the status of a job application
+ * @param {Object} application - The application to update
+ * @param {number} application.id - The application ID
+ * @param {string} application.status - The current status
+ */
 const updateStatus = async (application) => {
   try {
-    const newStatus = application.status === 'new' ? 'pending' : 
-                     application.status === 'pending' ? 'responded' : 
-                     application.status === 'responded' ? 'rejected' : 'new'
+    const statusOptions = [
+      { value: 'new', label: 'Naujas' },
+      { value: 'pending', label: 'Laukiama' },
+      { value: 'responded', label: 'Atsakyta' },
+      { value: 'rejected', label: 'Atmesta' }
+    ]
     
-    const response = await fetch(`${API_URL}/job-applications/${application.id}/status`, {
+    const currentStatusIndex = statusOptions.findIndex(option => option.value === application.status)
+    const nextStatusIndex = (currentStatusIndex + 1) % statusOptions.length
+    const nextStatus = statusOptions[nextStatusIndex]
+    const defaultStatus = statusOptions[0]?.value || 'pending'
+    const newStatus = nextStatus ? nextStatus.value : defaultStatus
+    
+    const response = await fetch(`/api/job-applications/${application.id}`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({ status: newStatus })
     })
-    
+
     if (!response.ok) {
       throw new Error('Failed to update status')
     }
-    
-    // Update local state
+
+    const updatedApplication = await response.json()
     const index = applications.value.findIndex(app => app.id === application.id)
     if (index !== -1) {
-      applications.value[index].status = newStatus
+      applications.value[index] = updatedApplication
     }
-    
-    // Update selected application if it's the same
-    if (selectedApplication.value && selectedApplication.value.id === application.id) {
-      selectedApplication.value.status = newStatus
-    }
-    
-    toast.success('Statusas sėkmingai atnaujintas')
-  } catch (err) {
-    console.error('Error updating status:', err)
-    toast.error('Nepavyko atnaujinti statuso. Bandykite dar kartą.')
+  } catch (error) {
+    console.error('Error updating status:', error)
+    // You might want to show an error toast here
   }
 }
 
@@ -396,7 +404,7 @@ const deleteApplication = async (application) => {
   }
   
   try {
-    const response = await fetch(`${API_URL}/job-applications/${application.id}`, {
+    const response = await fetch(`${API_URL}/jobs/${application.id}`, {
       method: 'DELETE'
     })
     

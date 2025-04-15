@@ -119,7 +119,10 @@ import {
   UserGroupIcon,
   LightBulbIcon,
   ChartBarIcon,
-  SparklesIcon
+  SparklesIcon,
+  UserIcon,
+  RocketLaunchIcon,
+  ShieldCheckIcon
 } from '@heroicons/vue/24/outline'
 
 const team = [

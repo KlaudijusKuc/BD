@@ -1,4 +1,4 @@
-import { defineEventHandler, createError } from 'h3'
+import { defineEventHandler, getRouterParams, createError } from 'h3'
 
 const posts = [
   {
@@ -74,28 +74,52 @@ const posts = [
 
 // GET /api/blog - Get all blog posts
 export const getBlogPosts = defineEventHandler(async (event) => {
-  return posts.map(({ content, ...post }) => post);
+  try {
+    return posts.map(({ content, ...post }) => post);
+  } catch (error) {
+    console.error('Error fetching blog posts:', error);
+    throw createError({
+      statusCode: 500,
+      message: 'Failed to fetch blog posts'
+    });
+  }
 });
 
 // GET /api/blog/:slug - Get a single blog post
 export const getBlogPost = defineEventHandler(async (event) => {
-  const slug = event.context.params.slug;
-  const post = posts.find(p => p.slug === slug);
-  
-  if (!post) {
+  try {
+    const params = getRouterParams(event);
+    const slug = params.slug;
+    const post = posts.find(p => p.slug === slug);
+    
+    if (!post) {
+      throw createError({
+        statusCode: 404,
+        message: 'Blog post not found'
+      });
+    }
+    
+    return post;
+  } catch (error) {
+    console.error('Error fetching blog post:', error);
     throw createError({
-      statusCode: 404,
-      message: 'Blog post not found'
+      statusCode: error.statusCode || 500,
+      message: error.message || 'Failed to fetch blog post'
     });
   }
-  
-  return post;
 });
 
 // Default handler for all routes
 export default defineEventHandler(async (event) => {
   const method = event.method;
-  const path = event.path;
+  const path = event.path?.toLowerCase();
+  
+  if (!path) {
+    throw createError({
+      statusCode: 404,
+      message: 'Not found'
+    });
+  }
   
   // Handle GET /api/blog
   if (method === 'GET' && path === '/api/blog') {
@@ -103,11 +127,10 @@ export default defineEventHandler(async (event) => {
   }
   
   // Handle GET /api/blog/:slug
-  if (method === 'GET' && path.match(/^\/api\/blog\/[a-z0-9-]+$/)) {
+  if (method === 'GET' && /^\/api\/blog\/[a-z0-9-]+$/.test(path)) {
     return getBlogPost(event);
   }
   
-  // Return 404 for other routes
   throw createError({
     statusCode: 404,
     message: 'Not found'

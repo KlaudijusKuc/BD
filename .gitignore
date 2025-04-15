@@ -29,10 +29,14 @@ lerna-debug.log*
 *.sln
 *.sw?
 
-# Local env files
+# Environment variables
 .env
 .env.*
 !.env.example
+
+# Uploaded files
+server/uploads/cv/*
+!server/uploads/cv/.gitkeep
 
 # Testing
 coverage

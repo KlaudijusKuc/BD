@@ -1,16 +1,5 @@
-import { defineEventHandler, readBody, createError } from 'h3'
-import { createPool } from 'mysql2/promise'
-
-const dbConfig = {
-  host: process.env.DB_HOST || 'sql7.freesqldatabase.com',
-  user: process.env.DB_USER || 'sql7772954',
-  password: process.env.DB_PASSWORD || 'TJ8yiaRujp',
-  database: process.env.DB_NAME || 'sql7772954',
-  port: parseInt(process.env.DB_PORT || '3306'),
-  ssl: false
-}
-
-const pool = createPool(dbConfig)
+import { defineEventHandler, readBody, getRouterParams, createError } from 'h3'
+import pool from '../config/db'
 
 // GET /api/contact - Get all contact submissions
 export const getContacts = defineEventHandler(async (event) => {
@@ -28,7 +17,8 @@ export const getContacts = defineEventHandler(async (event) => {
 
 // GET /api/contact/:id - Get a single contact submission
 export const getContact = defineEventHandler(async (event) => {
-  const id = event.context.params.id
+  const params = getRouterParams(event)
+  const id = params.id
   
   try {
     const [rows] = await pool.query('SELECT * FROM contact_submissions WHERE id = ?', [id])
@@ -86,7 +76,8 @@ export const createContact = defineEventHandler(async (event) => {
 
 // PATCH /api/contact/:id/status - Update a contact submission status
 export const updateContactStatus = defineEventHandler(async (event) => {
-  const id = event.context.params.id
+  const params = getRouterParams(event)
+  const id = params.id
   const body = await readBody(event)
   const { status } = body
   
@@ -98,33 +89,49 @@ export const updateContactStatus = defineEventHandler(async (event) => {
   }
   
   try {
-    await pool.query(
+    const [result] = await pool.query(
       'UPDATE contact_submissions SET status = ? WHERE id = ?',
       [status, id]
     )
+    
+    if (result.affectedRows === 0) {
+      throw createError({
+        statusCode: 404,
+        message: 'Contact submission not found'
+      })
+    }
     
     return { success: true, status }
   } catch (error) {
     console.error('Error updating contact submission status:', error)
     throw createError({
-      statusCode: 500,
-      message: 'Failed to update contact submission status'
+      statusCode: error.statusCode || 500,
+      message: error.message || 'Failed to update contact submission status'
     })
   }
 })
 
 // DELETE /api/contact/:id - Delete a contact submission
 export const deleteContact = defineEventHandler(async (event) => {
-  const id = event.context.params.id
+  const params = getRouterParams(event)
+  const id = params.id
   
   try {
-    await pool.query('DELETE FROM contact_submissions WHERE id = ?', [id])
+    const [result] = await pool.query('DELETE FROM contact_submissions WHERE id = ?', [id])
+    
+    if (result.affectedRows === 0) {
+      throw createError({
+        statusCode: 404,
+        message: 'Contact submission not found'
+      })
+    }
+    
     return { success: true }
   } catch (error) {
     console.error('Error deleting contact submission:', error)
     throw createError({
-      statusCode: 500,
-      message: 'Failed to delete contact submission'
+      statusCode: error.statusCode || 500,
+      message: error.message || 'Failed to delete contact submission'
     })
   }
 })
@@ -132,7 +139,14 @@ export const deleteContact = defineEventHandler(async (event) => {
 // Default handler for all routes
 export default defineEventHandler(async (event) => {
   const method = event.method
-  const path = event.path
+  const path = event.path?.toLowerCase()
+  
+  if (!path) {
+    throw createError({
+      statusCode: 404,
+      message: 'Not found'
+    })
+  }
   
   // Handle GET /api/contact
   if (method === 'GET' && path === '/api/contact') {
@@ -140,7 +154,7 @@ export default defineEventHandler(async (event) => {
   }
   
   // Handle GET /api/contact/:id
-  if (method === 'GET' && path.match(/^\/api\/contact\/\d+$/)) {
+  if (method === 'GET' && /^\/api\/contact\/\d+$/.test(path)) {
     return getContact(event)
   }
   
@@ -150,16 +164,15 @@ export default defineEventHandler(async (event) => {
   }
   
   // Handle PATCH /api/contact/:id/status
-  if (method === 'PATCH' && path.match(/^\/api\/contact\/\d+\/status$/)) {
+  if (method === 'PATCH' && /^\/api\/contact\/\d+\/status$/.test(path)) {
     return updateContactStatus(event)
   }
   
   // Handle DELETE /api/contact/:id
-  if (method === 'DELETE' && path.match(/^\/api\/contact\/\d+$/)) {
+  if (method === 'DELETE' && /^\/api\/contact\/\d+$/.test(path)) {
     return deleteContact(event)
   }
   
-  // Return 404 for other routes
   throw createError({
     statusCode: 404,
     message: 'Not found'

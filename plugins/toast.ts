@@ -1,17 +1,22 @@
 import { defineNuxtPlugin } from 'nuxt/app'
-import { useToast } from '~/composables/useToast'
+import Toast, { type PluginOptions, POSITION } from 'vue-toastification'
+import 'vue-toastification/dist/index.css'
 
-export default defineNuxtPlugin(() => {
-  const { toasts, add, remove } = useToast()
-
-  return {
-    provide: {
-      toast: {
-        success: (message: string, timeout?: number) => add(message, 'success', timeout),
-        error: (message: string, timeout?: number) => add(message, 'error', timeout),
-        info: (message: string, timeout?: number) => add(message, 'info', timeout),
-        remove
-      }
-    }
+export default defineNuxtPlugin((nuxtApp: any) => {
+  const options: PluginOptions = {
+    position: POSITION.TOP_RIGHT,
+    timeout: 5000,
+    closeOnClick: true,
+    pauseOnFocusLoss: true,
+    pauseOnHover: true,
+    draggable: true,
+    draggablePercent: 0.6,
+    showCloseButtonOnHover: false,
+    hideProgressBar: true,
+    closeButton: 'button',
+    icon: true,
+    rtl: false
   }
+
+  nuxtApp.vueApp.use(Toast, options)
 }) 

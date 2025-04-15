@@ -118,12 +118,11 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { 
-  ArrowLeftIcon, 
-  TrashIcon, 
-  ArrowDownTrayIcon 
+import {
+  ArrowLeftIcon,
 } from '@heroicons/vue/24/outline'
 
+// Define the Submission interface with all required properties
 interface Submission {
   id: number
   name: string
@@ -134,6 +133,7 @@ interface Submission {
   status: 'new' | 'pending' | 'responded' | 'rejected'
 }
 
+// Define page meta for admin layout
 definePageMeta({
   layout: 'admin'
 })
@@ -146,7 +146,8 @@ const error = ref<string | null>(null)
 const showStatusModal = ref(false)
 const selectedStatus = ref<'new' | 'responded'>('new')
 
-const formatDate = (dateString: string) => {
+// Format date to Lithuanian locale
+const formatDate = (dateString: string): string => {
   return new Date(dateString).toLocaleDateString('lt-LT', {
     year: 'numeric',
     month: 'long',
@@ -156,10 +157,13 @@ const formatDate = (dateString: string) => {
   })
 }
 
-const fetchSubmission = async () => {
+// Fetch submission data from API
+const fetchSubmission = async (): Promise<void> => {
   try {
     isLoading.value = true
-    const response = await fetch(`/api/contact/${route.params.id}`)
+    // Access route params safely with bracket notation
+    const id = route.params['id'] as string
+    const response = await fetch(`/api/contact/${id}`)
     if (!response.ok) {
       throw new Error('Failed to fetch submission')
     }
@@ -172,13 +176,15 @@ const fetchSubmission = async () => {
   }
 }
 
-const updateStatus = () => {
+// Show status update modal
+const updateStatus = (): void => {
   if (!submission.value) return
   selectedStatus.value = submission.value.status as 'new' | 'responded'
   showStatusModal.value = true
 }
 
-const saveStatus = async () => {
+// Save status changes
+const saveStatus = async (): Promise<void> => {
   if (!submission.value) return
 
   try {
@@ -204,7 +210,8 @@ const saveStatus = async () => {
   }
 }
 
-const deleteSubmission = async () => {
+// Delete submission
+const deleteSubmission = async (): Promise<void> => {
   if (!submission.value || !confirm('Are you sure you want to delete this submission?')) {
     return
   }
@@ -225,5 +232,6 @@ const deleteSubmission = async () => {
   }
 }
 
+// Load submission data on component mount
 onMounted(fetchSubmission)
 </script> 
