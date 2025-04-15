@@ -6,32 +6,23 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const dbConfig = {
-  host: process.env.DB_HOST || 'sql7.freesqldatabase.com',
-  user: process.env.DB_USER || 'sql7772954',
-  password: process.env.DB_PASSWORD || 'TJ8yiaRujp',
-  database: process.env.DB_NAME || 'sql7772954',
-  port: parseInt(process.env.DB_PORT || '3306'),
-  ssl: false
-}
+// This script is designed to be run manually after deployment
+// It will initialize the database with the schema
 
-async function initializeDatabase() {
-  console.log('Starting database initialization...');
+async function setupDatabase() {
+  console.log('Starting database setup...');
+  
+  const dbConfig = {
+    host: process.env.DB_HOST || 'sql7.freesqldatabase.com',
+    user: process.env.DB_USER || 'sql7772954',
+    password: process.env.DB_PASSWORD || 'TJ8yiaRujp',
+    database: process.env.DB_NAME || 'sql7772954',
+    port: parseInt(process.env.DB_PORT || '3306'),
+    ssl: false
+  };
+  
   console.log(`Connecting to database: ${dbConfig.host}:${dbConfig.port}/${dbConfig.database}`);
   
-  // If RAILWAY_DATABASE_URL is provided, use it instead
-  if (process.env.RAILWAY_DATABASE_URL) {
-    console.log('Using RAILWAY_DATABASE_URL for connection');
-    const url = new URL(process.env.RAILWAY_DATABASE_URL);
-    dbConfig.host = url.hostname;
-    dbConfig.user = url.username;
-    dbConfig.password = url.password;
-    dbConfig.port = url.port || 3306;
-    dbConfig.ssl = {
-      rejectUnauthorized: true
-    };
-  }
-
   let connection;
   try {
     connection = await createPool(dbConfig);
@@ -69,10 +60,9 @@ async function initializeDatabase() {
       }
     }
 
-    console.log('Database initialized successfully');
+    console.log('Database setup completed successfully');
   } catch (error) {
-    console.error('Error initializing database:', error);
-    // Exit with error code to indicate failure
+    console.error('Error setting up database:', error);
     process.exit(1);
   } finally {
     if (connection) {
@@ -82,9 +72,5 @@ async function initializeDatabase() {
   }
 }
 
-// Only run if this script is executed directly
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  initializeDatabase();
-}
-
-export default initializeDatabase; 
+// Run the setup function
+setupDatabase(); 

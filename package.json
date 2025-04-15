@@ -9,7 +9,8 @@
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "init-db": "node server/config/init-db.js",
-    "vercel-build": "npm run init-db && npm run build"
+    "setup-db": "node server/config/setup-db.js",
+    "vercel-build": "npm run build"
   },
   "dependencies": {
     "@heroicons/vue": "^2.1.1",

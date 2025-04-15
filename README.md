@@ -35,49 +35,60 @@ A modern e-commerce website built with Nuxt 3, Vue 3, and Tailwind CSS.
    npm install
    ```
 
-3. Create a `.env` file based on `.env.example`:
+3. Create a `.env` file with the following variables:
    ```bash
-   cp .env.example .env
+   DB_HOST=sql7.freesqldatabase.com
+   DB_USER=sql7772954
+   DB_PASSWORD=TJ8yiaRujp
+   DB_NAME=sql7772954
+   DB_PORT=3306
    ```
 
-4. Update the `.env` file with your database credentials.
-
-5. Initialize the database:
+4. Initialize the database:
    ```bash
    npm run init-db
    ```
 
-6. Start the development server:
+5. Start the development server:
    ```bash
    npm run dev
    ```
 
-7. Open your browser and navigate to `http://localhost:3000`.
+6. Open your browser and navigate to `http://localhost:3000`.
 
-## Deployment
+## Deployment to Vercel
 
-### Deploying to Vercel
-
-1. Push your code to a Git repository (GitHub, GitLab, or Bitbucket).
-
-2. Connect your repository to Vercel.
-
+1. Push your changes to GitHub
+2. Connect your GitHub repository to Vercel
 3. Configure the following environment variables in Vercel:
-   - `DB_HOST`
-   - `DB_USER`
-   - `DB_PASSWORD`
-   - `DB_NAME`
-   - `DB_PORT`
+   ```bash
+   DB_HOST=sql7.freesqldatabase.com
+   DB_USER=sql7772954
+   DB_PASSWORD=TJ8yiaRujp
+   DB_NAME=sql7772954
+   DB_PORT=3306
+   ```
+4. Deploy your application
 
-4. Deploy your application.
+## Database Setup After Deployment
 
-### Database Setup
+After deploying to Vercel, you need to set up the database. You can do this by running the following command locally:
 
-1. Create a MySQL database.
+```bash
+npm run setup-db
+```
 
-2. Update the environment variables with your database credentials.
+This will initialize the database with the required tables.
 
-3. The database schema will be automatically created during deployment.
+## Troubleshooting
+
+If you encounter any issues with the database connection, check the following:
+
+1. Ensure the database credentials are correct
+2. Make sure the database is accessible from your deployment environment
+3. Check if the database tables are created correctly
+
+For Vercel deployment issues, check the build logs in the Vercel dashboard for more information.
 
 ## License
 
