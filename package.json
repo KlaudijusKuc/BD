@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "nuxt build",
+    "build": "npm run init-db && nuxt build",
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
@@ -22,7 +22,7 @@
     "h3": "^1.15.1",
     "multer": "^1.4.5-lts.2",
     "mysql2": "^3.9.1",
-    "nuxt": "^3.10.1",
+    "nuxt": "^3.9.0",
     "vue": "^3.5.13",
     "vue-router": "^4.3.0",
     "vue-toastification": "^2.0.0-rc.5",
@@ -38,6 +38,6 @@
     "postcss": "^8.4.35",
     "tailwindcss": "^3.4.1",
     "typescript": "^5.3.3",
-    "vue-tsc": "^1.8.22"
+    "vue-tsc": "^2.2.8"
   }
 }
